@@ -1,0 +1,24 @@
+{
+  "model_name": "gene_sequence_classifier",
+  "model_version": "1.0.0",
+  "model_type": "neural_network",
+  "input_format": "dna_sequence",
+  "output_format": "species_prediction",
+  "sequence_length": 1000,
+  "supported_genes": ["COI", "16S", "18S", "ITS"],
+  "confidence_threshold": 0.7,
+  "preprocessing": {
+    "normalize": true,
+    "one_hot_encode": true,
+    "sequence_padding": true
+  },
+  "model_files": {
+    "primary_model": "models/gene_classifier.h5",
+    "encoder": "models/label_encoder.pkl",
+    "scaler": "models/sequence_scaler.pkl"
+  },
+  "reference_data": {
+    "species_database": "data/species_reference.csv",
+    "gene_sequences": "data/training_sequences.csv"
+  }
+}
