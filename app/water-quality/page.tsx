@@ -1,5 +1,5 @@
-import { WorldWaterQualityMap } from "@/components/world-water-quality-map"
+import { redirect } from 'next/navigation'
 
 export default function WaterQualityPage() {
-  return <WorldWaterQualityMap />
+  redirect('/Ocean_details/index.html')
 }
