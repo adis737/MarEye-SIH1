@@ -4,10 +4,10 @@ import bcrypt from "bcryptjs"
 
 export async function POST(req: NextRequest) {
   try {
-    const { username, email, password } = await req.json()
+    const { username, email, password, firstName, lastName, dob, avatar } = await req.json()
 
     if (!username || !email || !password) {
-      return NextResponse.json({ message: "Missing fields" }, { status: 400 })
+      return NextResponse.json({ message: "Missing required fields" }, { status: 400 })
     }
 
     const users = await getUserCollection()
@@ -23,6 +23,10 @@ export async function POST(req: NextRequest) {
       username,
       email,
       password: hashedPassword,
+      firstName: firstName || "",
+      lastName: lastName || "",
+      dob: dob || "",
+      avatar: avatar || "",
       createdAt: new Date(),
     })
 

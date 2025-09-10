@@ -2,9 +2,45 @@ import { HomeButton } from "@/components/home-button"
 import { BubbleCursor } from "@/components/bubble-cursor"
 import { GlassmorphismCard } from "@/components/glassmorphism-card"
 import { BubbleButton } from "@/components/bubble-button"
-import { Database, Waves, Microscope, Sofa as Sonar, Dna, Camera } from "lucide-react"
+import { Database, Waves, Microscope, Sofa as Sonar, Dna, Camera, Bookmark } from "lucide-react"
+import { cookies } from "next/headers"
+import jwt from "jsonwebtoken"
+import { getDatabase } from "@/lib/mongodb"
 
-export default function DataCollectionPage() {
+
+type WatchItem = {
+  _id: string
+  itemType: "gene_sequence" | "image_recognition"
+  title?: string | null
+  summary?: string | null
+  score?: number | null
+  createdAt?: string
+}
+
+export default async function DataCollectionPage() {
+  const cookieStore = cookies()
+  const token = cookieStore.get("auth_token")?.value
+  let watchlist: WatchItem[] = []
+
+  try {
+    if (token) {
+      const decoded = jwt.decode(token) as { id?: string } | null
+      if (decoded?.id) {
+        const db = await getDatabase()
+        const items = await db
+          .collection("watchlist")
+          .find({ userId: decoded.id })
+          .project({ itemType: 1, title: 1, summary: 1, score: 1, createdAt: 1 })
+          .sort({ createdAt: -1 })
+          .limit(10)
+          .toArray()
+        watchlist = items.map((d: any) => ({ _id: d._id?.toString?.() ?? "", itemType: d.itemType, title: d.title, summary: d.summary, score: d.score, createdAt: d.createdAt?.toISOString?.() }))
+      }
+    }
+  } catch (e) {
+    // Non-blocking
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-900 via-blue-900 to-cyan-900 relative overflow-hidden">
       <BubbleCursor />
@@ -104,6 +140,34 @@ export default function DataCollectionPage() {
               </div>
             </GlassmorphismCard>
           </div>
+
+          {/* Watchlist */}
+          <GlassmorphismCard className="p-8 mb-12">
+            <h2 className="text-3xl font-bold text-white mb-8 text-center flex items-center justify-center gap-3">
+              <Bookmark className="h-8 w-8 text-cyan-400" />
+              Your Watchlist
+            </h2>
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="space-y-3">
+                {watchlist.length === 0 && (
+                  <div className="text-cyan-100/80 text-sm">No items watchlisted yet.</div>
+                )}
+                {watchlist.map((item) => (
+                  <div key={item._id} className="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-white/10">
+                    <div>
+                      <div className="text-white text-sm font-medium">
+                        {item.title || (item.itemType === "gene_sequence" ? "eDNA analysis" : "Image recognition")}
+                      </div>
+                      {item.summary && <div className="text-cyan-200 text-xs">{item.summary}</div>}
+                    </div>
+                    <div className="text-cyan-200 text-xs">
+                      {typeof item.score === "number" ? `${Math.round(item.score * 100) / 100}%` : ""}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </GlassmorphismCard>
 
           {/* Process Flow */}
           <GlassmorphismCard className="p-8 mb-12">

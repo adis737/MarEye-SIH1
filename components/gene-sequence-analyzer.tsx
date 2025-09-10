@@ -19,7 +19,8 @@ import {
   Sparkles,
   Upload,
   Copy,
-  Download
+  Download,
+  Star
 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -48,6 +49,7 @@ export function GeneSequenceAnalyzer() {
   const [results, setResults] = useState<AnalysisResponse | null>(null)
   const [currentSequence, setCurrentSequence] = useState("")
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [watchlistedIndexes, setWatchlistedIndexes] = useState<Set<number>>(new Set())
 
   const handleAddSequence = () => {
     if (currentSequence.trim()) {
@@ -59,6 +61,29 @@ export function GeneSequenceAnalyzer() {
       } else {
         toast.error("Please enter a valid DNA sequence (A, T, G, C only)")
       }
+    }
+  }
+
+  const handleAddToWatchlist = async (seq: string, index: number) => {
+    try {
+      const res = await fetch("/api/watchlist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          itemType: "gene_sequence",
+          title: `DNA sequence (${seq.length} bp)`,
+          summary: seq.length > 60 ? `${seq.substring(0, 60)}...` : seq,
+          dataPreview: seq.length > 60 ? `${seq.substring(0, 60)}...` : seq,
+        }),
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data?.error || "Failed to add to watchlist")
+      }
+      setWatchlistedIndexes(prev => new Set(prev).add(index))
+      toast.success("Added to watchlist")
+    } catch (e: any) {
+      toast.error(e?.message || "Could not add to watchlist")
     }
   }
 
@@ -250,20 +275,40 @@ export function GeneSequenceAnalyzer() {
             <div className="space-y-2 max-h-40 overflow-y-auto">
               {sequences.map((seq, index) => (
                 <div key={index} className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/10">
-                  <div className="flex-1">
+                  <button
+                    type="button"
+                    className="flex-1 text-left"
+                    onClick={() => handleAddToWatchlist(seq, index)}
+                    title="Click to add this DNA sequence to your watchlist"
+                  >
                     <div className="text-sm text-white font-mono">
                       {seq.length > 60 ? `${seq.substring(0, 60)}...` : seq}
                     </div>
                     <div className="text-xs text-emerald-200">Length: {seq.length} bp</div>
+                  </button>
+                  <div className="flex items-center gap-2 ml-3">
+                    <Button
+                      onClick={() => handleAddToWatchlist(seq, index)}
+                      variant="outline"
+                      size="icon"
+                      className={
+                        watchlistedIndexes.has(index)
+                          ? "border-yellow-400/60 bg-yellow-400/10 text-yellow-400"
+                          : "bg-white/10 border-white/20 text-white hover:bg-white/20"
+                      }
+                      title={watchlistedIndexes.has(index) ? "Added to watchlist" : "Add to watchlist"}
+                    >
+                      <Star className={watchlistedIndexes.has(index) ? "h-4 w-4 fill-yellow-400 text-yellow-400" : "h-4 w-4"} />
+                    </Button>
+                    <Button
+                      onClick={() => handleRemoveSequence(index)}
+                      variant="outline"
+                      size="sm"
+                      className="bg-red-500/20 border-red-400/30 text-red-400 hover:bg-red-400/30"
+                    >
+                      Remove
+                    </Button>
                   </div>
-                  <Button
-                    onClick={() => handleRemoveSequence(index)}
-                    variant="outline"
-                    size="sm"
-                    className="bg-red-500/20 border-red-400/30 text-red-400 hover:bg-red-400/30 ml-3"
-                  >
-                    Remove
-                  </Button>
                 </div>
               ))}
             </div>

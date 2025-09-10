@@ -1,73 +1,105 @@
 import { NextResponse } from "next/server";
-import connectDB from "@/lib/mongodb";
-import User from "@/lib/userModel";
+import { getUserCollection } from "@/dbCollections";
 import jwt from "jsonwebtoken";
+import { ObjectId } from "mongodb";
 
 export async function GET(req: Request) {
   try {
-    // Add connection timeout and retry logic
-    let connectionAttempts = 0;
-    const maxAttempts = 3;
-    
-    while (connectionAttempts < maxAttempts) {
-      try {
-        await connectDB();
-        break; // Successfully connected
-      } catch (connectionError: any) {
-        connectionAttempts++;
-        console.log(`Connection attempt ${connectionAttempts} failed:`, connectionError.message);
-        
-        if (connectionAttempts >= maxAttempts) {
-          throw new Error("Failed to connect to database after multiple attempts");
-        }
-        
-        // Wait before retrying (exponential backoff)
-        await new Promise(resolve => setTimeout(resolve, 1000 * connectionAttempts));
-      }
-    }
+    console.log("Profile API called");
 
     // Extract token from cookies
     const cookieHeader = req.headers.get("cookie");
+    console.log("Cookie header:", cookieHeader);
+    
     if (!cookieHeader) {
-      return NextResponse.json({ success: false, error: "No authentication cookie found" }, { status: 401 });
+      return NextResponse.json({ 
+        success: false, 
+        error: "No authentication cookie found",
+        debug: "No cookie header present"
+      }, { status: 401 });
     }
 
-    const token = cookieHeader.split("auth_token=")[1]?.split(";")[0];
+    // Better cookie parsing
+    const cookies = cookieHeader.split(';').reduce((acc: Record<string, string>, cookie) => {
+      const [key, value] = cookie.trim().split('=');
+      if (key && value) {
+        acc[key] = value;
+      }
+      return acc;
+    }, {});
+
+    const token = cookies['auth_token'];
+    console.log("Extracted token:", token ? "Present" : "Missing");
+    
     if (!token) {
-      return NextResponse.json({ success: false, error: "Authentication token not found" }, { status: 401 });
+      return NextResponse.json({ 
+        success: false, 
+        error: "Authentication token not found",
+        debug: `Available cookies: ${Object.keys(cookies).join(', ')}`
+      }, { status: 401 });
     }
 
+    // Check if JWT_SECRET is available
+    const jwtSecret = process.env.JWT_SECRET || "supersecret";
+    
     // Verify JWT token
     let decoded: any;
     try {
-      decoded = jwt.verify(token, process.env.JWT_SECRET || "supersecret");
+      decoded = jwt.verify(token, jwtSecret);
+      console.log("JWT decoded successfully, user ID:", decoded.id);
     } catch (jwtError: any) {
       console.error("JWT verification failed:", jwtError.message);
-      return NextResponse.json({ success: false, error: "Invalid or expired token" }, { status: 401 });
+      
+      return NextResponse.json({ 
+        success: false, 
+        error: "Invalid or expired token",
+        debug: `JWT Error: ${jwtError.message}`
+      }, { status: 401 });
     }
 
-    // Find user in database
-    const user = await User.findById(decoded.id).select("-password");
+    // Validate decoded token structure
+    if (!decoded || !decoded.id) {
+      return NextResponse.json({ 
+        success: false, 
+        error: "Invalid token structure",
+        debug: "Token does not contain user ID"
+      }, { status: 401 });
+    }
+
+    // Find user in database using the same method as login
+    const users = await getUserCollection();
+    const user = await users.findOne({ _id: new ObjectId(decoded.id) });
+    
+    console.log("User found:", user ? "Yes" : "No");
+    
     if (!user) {
-      return NextResponse.json({ success: false, error: "User not found" }, { status: 404 });
+      return NextResponse.json({ 
+        success: false, 
+        error: "User not found",
+        debug: `User ID ${decoded.id} not found in database`
+      }, { status: 404 });
     }
 
-    return NextResponse.json({ success: true, user });
+    console.log("Profile retrieved successfully for user:", user.email);
+    return NextResponse.json({ 
+      success: true, 
+      user: {
+        firstName: user.firstName || user.username || "", // Handle both schemas
+        lastName: user.lastName || "",
+        email: user.email,
+        dob: user.dob,
+        avatar: user.avatar
+      }
+    });
     
   } catch (err: any) {
     console.error("Profile API Error:", err);
-    
-    // Handle specific MongoDB connection errors
-    if (err.name === 'MongoServerSelectionError' || err.name === 'MongoNetworkError') {
-      return NextResponse.json({ 
-        success: false, 
-        error: "Database connection failed. Please try again later." 
-      }, { status: 503 });
-    }
+    console.error("Error stack:", err.stack);
     
     return NextResponse.json({ 
       success: false, 
-      error: "Internal server error" 
+      error: "Internal server error",
+      debug: err.message
     }, { status: 500 });
   }
 }

@@ -1,10 +1,11 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { GeminiAIService } from "@/lib/gemini-services"
 import { getDatabase } from "@/lib/mongodb"
+import { getUserFromAuthHeader } from "@/lib/auth"
 
 export async function POST(request: NextRequest) {
   try {
-    const { sequence, sequenceType, locationContext, sequenceId } = await request.json()
+    const { sequence, sequenceType, locationContext, sequenceId, watchlist } = await request.json()
 
     if (!sequence || !sequenceType) {
       return NextResponse.json({ error: "DNA sequence and sequence type are required" }, { status: 400 })
@@ -16,6 +17,9 @@ export async function POST(request: NextRequest) {
     const result = await GeminiAIService.analyzeGeneSequence(sequence, sequenceType, locationContext)
 
     console.log("[v0] Gene sequence analysis completed:", result.species)
+
+    // Resolve user from auth header if present
+    const authUser = getUserFromAuthHeader(request.headers.get("authorization"))
 
     // Store analysis result in database
     const db = await getDatabase()
@@ -36,6 +40,7 @@ export async function POST(request: NextRequest) {
       modelUsed: "gemini-2.0-flash",
       processingTime: Date.now(),
       createdAt: new Date(),
+      userId: authUser?.id || null,
     }
 
     const analysisResult = await db.collection("aiAnalyses").insertOne(analysisRecord)
@@ -61,9 +66,28 @@ export async function POST(request: NextRequest) {
       },
       createdAt: new Date(),
       updatedAt: new Date(),
+      userId: authUser?.id || null,
     }
 
     await db.collection("geneSequences").insertOne(geneSequenceRecord)
+
+    // Optionally add to watchlist
+    if (watchlist === true) {
+      try {
+        await db.collection("watchlist").insertOne({
+          userId: authUser?.id || null,
+          itemType: "gene_sequence",
+          referenceId: geneSequenceRecord.sequenceId,
+          title: result.species,
+          summary: result.description?.slice(0, 140) || null,
+          dataPreview: (sequence as string)?.slice(0, 100) + "...",
+          score: result.confidence,
+          createdAt: new Date(),
+        })
+      } catch (err) {
+        console.warn("Failed to add gene sequence to watchlist", err)
+      }
+    }
 
     const enhancedResult = {
       ...result,
