@@ -7,13 +7,24 @@ console.log('Email config check:', {
   NODE_ENV: process.env.NODE_ENV
 });
 
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.HOST_EMAIL,
-    pass: process.env.HOST_EMAIL_PASSWORD,
-  },
-});
+// Use explicit SMTP if provided; otherwise fallback to simple Gmail service
+const transporter = process.env.SMTP_HOST
+  ? nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: Number(process.env.SMTP_PORT || 587),
+      secure: String(process.env.SMTP_SECURE || 'false') === 'true',
+      auth: {
+        user: process.env.HOST_EMAIL,
+        pass: process.env.HOST_EMAIL_PASSWORD,
+      },
+    })
+  : nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.HOST_EMAIL,
+        pass: process.env.HOST_EMAIL_PASSWORD,
+      },
+    });
 
 // Test the transporter configuration
 transporter.verify((error, success) => {
@@ -28,7 +39,9 @@ export async function sendOTPEmail(email: string, otp: string, name?: string) {
   const mailOptions = {
     from: process.env.HOST_EMAIL,
     to: email,
-    subject: '🔐 OTP Verification - AI Biodiversity Platform',
+    // Avoid emojis in subject to reduce spam likelihood
+    subject: 'OTP Verification - AI Biodiversity Platform',
+    text: `Your verification code is: ${otp}\n\nThis code expires in 10 minutes. If you did not request this, you can ignore this email.`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #0891b2 100%); padding: 40px; border-radius: 20px; color: white;">
         <div style="text-align: center; margin-bottom: 30px;">

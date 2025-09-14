@@ -102,6 +102,7 @@ export function SpeciesRecognitionSystem() {
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: 'include',
         body: JSON.stringify({
           imageData: selectedImage,
           additionalContext: additionalContext || undefined,
@@ -112,7 +113,13 @@ export function SpeciesRecognitionSystem() {
       setAnalysisProgress(100)
 
       if (!response.ok) {
-        throw new Error("Failed to analyze image")
+        const errorData = await response.json()
+        if (response.status === 429 && errorData.tokenLimitReached) {
+          setError("Daily token limit reached. Please upgrade your plan to continue using AI features.")
+          // You could also redirect to subscription page here
+          return
+        }
+        throw new Error(errorData.error || "Failed to analyze image")
       }
 
       const data = await response.json()

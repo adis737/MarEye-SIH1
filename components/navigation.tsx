@@ -4,13 +4,17 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { BubbleButton } from "@/components/bubble-button"
-import { Menu, X, User, LogOut, Settings, ChevronDown } from "lucide-react"
+import { Menu, X, User, LogOut, Settings, ChevronDown, Zap, Crown, Building2, MoreHorizontal, Phone, BarChart3, TrendingUp, Leaf } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
 
 export function Navigation() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
+  const [isMoreOpen, setIsMoreOpen] = useState(false)
   const [avatar, setAvatar] = useState<string>("")
   const [userData, setUserData] = useState<any>(null)
+  const [tokenStatus, setTokenStatus] = useState<any>(null)
+  const [subscription, setSubscription] = useState<any>(null)
   const pathname = usePathname()
 
   useEffect(() => {
@@ -26,15 +30,41 @@ export function Navigation() {
     } catch {}
   }, [])
 
-  const navItems = [
+  // Fetch token status and subscription info
+  useEffect(() => {
+    const fetchTokenStatus = async () => {
+      try {
+        const response = await fetch('/api/tokens/status', {
+          credentials: 'include'
+        })
+        const data = await response.json()
+        if (data.success) {
+          setTokenStatus(data.tokenStatus)
+          setSubscription(data.subscription)
+        }
+      } catch (error) {
+        console.error('Error fetching token status:', error)
+      }
+    }
+
+    if (userData) {
+      fetchTokenStatus()
+    }
+  }, [userData])
+
+  const mainNavItems = [
     { href: "/", label: "Home", icon: "🏠" },
-    { href: "/solutions/data-collection", label: "Data Collection", icon: "📊" },
+    { href: "/solutions/data-collection", label: "Watchlist", icon: "📋" },
     { href: "/solutions/ai-processing", label: "AI Processing", icon: "🤖" },
-    { href: "/solutions/population-trends", label: "Population Trends", icon: "📈" },
-    { href: "/solutions/conservation-insights", label: "Conservation", icon: "🌱" },
     { href: "/species-recognition", label: "Species Recognition", icon: "🔍" },
     { href: "/water-quality", label: "Water Quality", icon: "💧" },
-    { href: "/dashboard", label: "Dashboard", icon: "📋" },
+    { href: "/dashboard", label: "Dashboard", icon: "📊" },
+  ]
+
+  const moreNavItems = [
+    { href: "/solutions/population-trends", label: "Population Trends", icon: TrendingUp },
+    { href: "/solutions/conservation-insights", label: "Conservation", icon: Leaf },
+    { href: "/subscription", label: "Subscription", icon: Crown },
   ]
 
   const scrollToContact = () => {
@@ -83,7 +113,7 @@ export function Navigation() {
             {/* Enhanced Desktop Navigation */}
             <div className="hidden lg:flex items-center space-x-2">
               <div className="flex items-center space-x-1 bg-white/5 backdrop-blur-md rounded-2xl p-2 border border-white/10">
-                {navItems.map((item) => {
+                {mainNavItems.map((item) => {
                   const isActive = pathname === item.href
                   return (
                     <Link
@@ -103,6 +133,61 @@ export function Navigation() {
                     </Link>
                   )
                 })}
+                
+                {/* More Options Dropdown */}
+                <div className="relative">
+                  <button
+                    onClick={() => setIsMoreOpen(!isMoreOpen)}
+                    className={`relative flex items-center space-x-2 px-4 py-2.5 text-sm font-medium rounded-xl transition-all duration-300 group ${
+                      moreNavItems.some(item => pathname === item.href)
+                        ? "text-white bg-gradient-to-r from-cyan-400/20 to-blue-500/20 border border-cyan-400/30 shadow-lg shadow-cyan-400/10"
+                        : "text-cyan-100 hover:text-white hover:bg-white/10"
+                    }`}
+                  >
+                    <MoreHorizontal className="w-4 h-4" />
+                    <span>More</span>
+                    <ChevronDown className={`w-3 h-3 transition-transform duration-300 ${isMoreOpen ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  {/* More Dropdown Menu */}
+                  {isMoreOpen && (
+                    <div className="absolute top-full left-0 mt-2 w-56 bg-slate-900/95 backdrop-blur-2xl rounded-2xl border border-white/10 shadow-2xl py-2 z-50">
+                      {moreNavItems.map((item) => {
+                        const isActive = pathname === item.href
+                        const IconComponent = item.icon
+                        return (
+                          <Link
+                            key={item.href}
+                            href={item.href}
+                            className={`flex items-center space-x-3 px-4 py-3 text-sm transition-colors duration-200 ${
+                              isActive
+                                ? "text-white bg-gradient-to-r from-cyan-400/20 to-blue-500/20"
+                                : "text-cyan-100 hover:text-white hover:bg-white/10"
+                            }`}
+                            onClick={() => setIsMoreOpen(false)}
+                          >
+                            <IconComponent className="w-4 h-4" />
+                            <span>{item.label}</span>
+                            {isActive && (
+                              <div className="w-1 h-1 bg-cyan-400 rounded-full ml-auto"></div>
+                            )}
+                          </Link>
+                        )
+                      })}
+                      <div className="border-t border-white/10 my-2"></div>
+                      <button
+                        onClick={() => {
+                          scrollToContact()
+                          setIsMoreOpen(false)
+                        }}
+                        className="flex items-center space-x-3 px-4 py-3 text-sm text-cyan-100 hover:text-white hover:bg-white/10 transition-colors duration-200 w-full text-left"
+                      >
+                        <Phone className="w-4 h-4" />
+                        <span>Contact Us</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Enhanced Profile Dropdown */}
@@ -130,16 +215,42 @@ export function Navigation() {
                     <div className="text-xs text-cyan-300/70">
                       {userData?.email || "user@example.com"}
                     </div>
+                    {tokenStatus && (
+                      <div className="text-xs text-cyan-300/70 mt-1">
+                        {tokenStatus.dailyLimit === -1 ? '∞' : tokenStatus.remaining} tokens left
+                      </div>
+                    )}
                   </div>
                   <ChevronDown className={`w-4 h-4 text-cyan-300 transition-transform duration-300 ${isProfileOpen ? 'rotate-180' : ''}`} />
                 </button>
 
                 {/* Profile Dropdown Menu */}
                 {isProfileOpen && (
-                  <div className="absolute right-0 mt-2 w-64 bg-slate-900/95 backdrop-blur-2xl rounded-2xl border border-white/10 shadow-2xl py-2 z-50">
+                  <div className="absolute right-0 mt-2 w-72 bg-slate-900/95 backdrop-blur-2xl rounded-2xl border border-white/10 shadow-2xl py-2 z-50">
                     <div className="px-4 py-3 border-b border-white/10">
-                      <div className="text-sm font-medium text-white">{userData?.firstName} {userData?.lastName}</div>
-                      <div className="text-xs text-cyan-300/70">{userData?.email}</div>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="text-sm font-medium text-white">{userData?.firstName} {userData?.lastName}</div>
+                          <div className="text-xs text-cyan-300/70">{userData?.email}</div>
+                        </div>
+                        {subscription && (
+                          <Badge className={`${
+                            subscription.plan === 'basic' ? 'bg-blue-100 text-blue-800' :
+                            subscription.plan === 'pro' ? 'bg-purple-100 text-purple-800' :
+                            'bg-emerald-100 text-emerald-800'
+                          } flex items-center space-x-1`}>
+                            {subscription.plan === 'basic' && <Zap className="w-3 h-3" />}
+                            {subscription.plan === 'pro' && <Crown className="w-3 h-3" />}
+                            {subscription.plan === 'enterprise' && <Building2 className="w-3 h-3" />}
+                            <span className="capitalize text-xs">{subscription.plan}</span>
+                          </Badge>
+                        )}
+                      </div>
+                      {tokenStatus && (
+                        <div className="mt-2 text-xs text-cyan-300/70">
+                          {tokenStatus.dailyLimit === -1 ? 'Unlimited tokens' : `${tokenStatus.remaining}/${tokenStatus.dailyLimit} tokens remaining`}
+                        </div>
+                      )}
                     </div>
                     <Link
                       href="/profile"
@@ -169,15 +280,6 @@ export function Navigation() {
                 )}
               </div>
 
-              {/* Enhanced Contact Button */}
-              <div className="ml-4">
-                <BubbleButton
-                  onClick={scrollToContact}
-                  className="bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 border-emerald-400/30 hover:from-emerald-400/30 hover:to-cyan-400/30 hover:shadow-lg hover:shadow-emerald-400/25 transition-all duration-300"
-                >
-                  Contact Us
-                </BubbleButton>
-              </div>
             </div>
 
             {/* Enhanced Mobile menu button */}
@@ -197,7 +299,8 @@ export function Navigation() {
           {isMenuOpen && (
             <div className="lg:hidden">
               <div className="px-4 pt-4 pb-6 space-y-2 bg-slate-900/95 backdrop-blur-2xl border-t border-cyan-400/20 rounded-b-3xl shadow-2xl">
-                {navItems.map((item) => {
+                {/* Main Navigation Items */}
+                {mainNavItems.map((item) => {
                   const isActive = pathname === item.href
                   return (
                     <Link
@@ -215,7 +318,59 @@ export function Navigation() {
                     </Link>
                   )
                 })}
+
+                {/* More Options */}
+                <div className="pt-2 border-t border-white/10">
+                  <div className="text-xs text-cyan-300/70 px-4 py-2 font-medium">More Options</div>
+                  {moreNavItems.map((item) => {
+                    const isActive = pathname === item.href
+                    const IconComponent = item.icon
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        className={`flex items-center space-x-3 px-4 py-3 text-base font-medium rounded-xl transition-all duration-300 ${
+                          isActive
+                            ? "text-white bg-gradient-to-r from-cyan-400/20 to-blue-500/20 border border-cyan-400/30"
+                            : "text-cyan-100 hover:text-white hover:bg-white/10"
+                        }`}
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        <IconComponent className="w-5 h-5" />
+                        <span>{item.label}</span>
+                      </Link>
+                    )
+                  })}
+                  <button
+                    onClick={() => {
+                      scrollToContact()
+                      setIsMenuOpen(false)
+                    }}
+                    className="flex items-center space-x-3 px-4 py-3 text-base font-medium text-cyan-100 hover:text-white hover:bg-white/10 rounded-xl transition-all duration-300 w-full text-left"
+                  >
+                    <Phone className="w-5 h-5" />
+                    <span>Contact Us</span>
+                  </button>
+                </div>
                 
+                {/* Mobile Token Status */}
+                {tokenStatus && (
+                  <div className="px-4 py-3 bg-white/5 rounded-xl border border-white/10">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <Zap className="w-4 h-4 text-cyan-300" />
+                        <span className="text-sm text-cyan-200">
+                          {tokenStatus.dailyLimit === -1 ? 'Unlimited' : tokenStatus.remaining} tokens left
+                        </span>
+                      </div>
+                      {tokenStatus.remaining <= 2 && tokenStatus.dailyLimit !== -1 && (
+                        <div className="w-2 h-2 bg-red-400 rounded-full animate-pulse"></div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+
                 {/* Mobile Profile Section */}
                 {userData && (
                   <div className="pt-4 border-t border-white/10">
@@ -243,6 +398,14 @@ export function Navigation() {
                     >
                       <User className="w-4 h-4" />
                       <span>Profile Settings</span>
+                    </Link>
+                    <Link
+                      href="/subscription"
+                      className="flex items-center space-x-3 px-4 py-3 text-cyan-100 hover:text-white hover:bg-white/10 rounded-xl transition-colors duration-200"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      <Crown className="w-4 h-4" />
+                      <span>Subscription</span>
                     </Link>
                     <button
                       onClick={() => {
@@ -274,11 +437,14 @@ export function Navigation() {
         </div>
       </nav>
 
-      {/* Click outside to close profile dropdown */}
-      {isProfileOpen && (
+      {/* Click outside to close dropdowns */}
+      {(isProfileOpen || isMoreOpen) && (
         <div 
           className="fixed inset-0 z-40" 
-          onClick={() => setIsProfileOpen(false)}
+          onClick={() => {
+            setIsProfileOpen(false)
+            setIsMoreOpen(false)
+          }}
         />
       )}
     </>

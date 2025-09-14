@@ -4,6 +4,8 @@ import { useRouter } from "next/navigation";
 import { VideoBackground } from "@/components/video-background";
 import { useState, useEffect } from "react";
 import { Mail, Shield, ArrowLeft, CheckCircle, User, Upload } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
+import { GoogleSignInButton } from "@/components/google-signin-button";
 
 export default function RegisterPage() {
 	const router = useRouter();
@@ -15,6 +17,8 @@ export default function RegisterPage() {
 	const [userData, setUserData] = useState<any>(null);
 	const [otp, setOtp] = useState('');
 	const [countdown, setCountdown] = useState(0);
+	const [showPassword, setShowPassword] = useState(false);
+	const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
 	// Countdown timer for resend OTP
 	useEffect(() => {
@@ -111,7 +115,7 @@ export default function RegisterPage() {
 			setUserData(userData);
 			setStep('otp');
 			setSuccess("OTP sent successfully! Check your email.");
-			setCountdown(60);
+			setCountdown(30);
 		} catch (err) {
 			console.error("Send OTP error:", err);
 			setError(err instanceof Error ? err.message : "Failed to send OTP");
@@ -208,7 +212,7 @@ export default function RegisterPage() {
 			}
 
 			setSuccess("OTP resent successfully!");
-			setCountdown(60);
+			setCountdown(30);
 		} catch (err) {
 			console.error("Resend OTP error:", err);
 			setError(err instanceof Error ? err.message : "Failed to resend OTP");
@@ -350,27 +354,47 @@ export default function RegisterPage() {
 										<label htmlFor="password" className="text-sm font-medium">
 											Password
 										</label>
-										<input
-											id="password"
-											name="password"
-											type="password"
-											required
-											placeholder="••••••••"
-											className="w-full rounded-md border bg-background/60 px-3 py-2 text-sm outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-cyan-400"
-										/>
+										<div className="relative">
+											<input
+												id="password"
+												name="password"
+												type={showPassword ? "text" : "password"}
+												required
+												placeholder="••••••••"
+												className="w-full rounded-md border bg-background/60 px-3 py-2 pr-10 text-sm outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-cyan-400"
+											/>
+											<button
+												type="button"
+												aria-label={showPassword ? "Hide password" : "Show password"}
+												onClick={() => setShowPassword(!showPassword)}
+												className="absolute right-2 top-1/2 -translate-y-1/2 text-white/70 hover:text-white"
+											>
+												{showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+											</button>
+										</div>
 									</div>
 									<div className="space-y-2">
 										<label htmlFor="confirmPassword" className="text-sm font-medium">
 											Confirm password
 										</label>
-										<input
-											id="confirmPassword"
-											name="confirmPassword"
-											type="password"
-											required
-											placeholder="••••••••"
-											className="w-full rounded-md border bg-background/60 px-3 py-2 text-sm outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-cyan-400"
-										/>
+										<div className="relative">
+											<input
+												id="confirmPassword"
+												name="confirmPassword"
+												type={showConfirmPassword ? "text" : "password"}
+												required
+												placeholder="••••••••"
+												className="w-full rounded-md border bg-background/60 px-3 py-2 pr-10 text-sm outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-cyan-400"
+											/>
+											<button
+												type="button"
+												aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+												onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+												className="absolute right-2 top-1/2 -translate-y-1/2 text-white/70 hover:text-white"
+											>
+												{showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+											</button>
+										</div>
 									</div>
 								</div>
 
@@ -391,6 +415,9 @@ export default function RegisterPage() {
 										</>
 									)}
 								</button>
+								<div className="mt-3">
+									<GoogleSignInButton label="Continue with Google" />
+								</div>
 							</div>
 						</form>
 					</>
