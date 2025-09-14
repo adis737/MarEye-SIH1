@@ -6,8 +6,15 @@ import { DataResultsSection } from "@/components/data-results-section"
 import { ContactSection } from "@/components/contact-section"
 import { ContaminationMap } from "@/components/contamination-map"
 import { BubbleCursor } from "@/components/bubble-cursor"
+import { cookies } from "next/headers"
+import { redirect } from "next/navigation"
 
 export default function HomePage() {
+  const authToken = cookies().get("auth_token")?.value
+  if (!authToken) {
+    redirect("/try")
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <BubbleCursor />

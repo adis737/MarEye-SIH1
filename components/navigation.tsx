@@ -1,22 +1,70 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 import { BubbleButton } from "@/components/bubble-button"
-import { Menu, X } from "lucide-react"
+import { Menu, X, User, LogOut, Settings, ChevronDown, Zap, Crown, Building2, MoreHorizontal, Phone, BarChart3, TrendingUp, Leaf } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
 
 export function Navigation() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [isProfileOpen, setIsProfileOpen] = useState(false)
+  const [isMoreOpen, setIsMoreOpen] = useState(false)
+  const [avatar, setAvatar] = useState<string>("")
+  const [userData, setUserData] = useState<any>(null)
+  const [tokenStatus, setTokenStatus] = useState<any>(null)
+  const [subscription, setSubscription] = useState<any>(null)
+  const pathname = usePathname()
 
-  const navItems = [
-    { href: "/", label: "Home" },
-    { href: "/solutions/data-collection", label: "Data Collection" },
-    { href: "/solutions/ai-processing", label: "AI Processing" },
-    { href: "/solutions/population-trends", label: "Population Trends" },
-    { href: "/solutions/conservation-insights", label: "Conservation" },
-    { href: "/species-recognition", label: "Species Recognition" },
-    { href: "/water-quality", label: "Water Quality" },
-    { href: "/dashboard", label: "Dashboard" },
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("profile")
+      if (stored) {
+        const data = JSON.parse(stored)
+        setUserData(data)
+        if (data?.avatar) {
+          setAvatar(data.avatar)
+        }
+      }
+    } catch {}
+  }, [])
+
+  // Fetch token status and subscription info
+  useEffect(() => {
+    const fetchTokenStatus = async () => {
+      try {
+        const response = await fetch('/api/tokens/status', {
+          credentials: 'include'
+        })
+        const data = await response.json()
+        if (data.success) {
+          setTokenStatus(data.tokenStatus)
+          setSubscription(data.subscription)
+        }
+      } catch (error) {
+        console.error('Error fetching token status:', error)
+      }
+    }
+
+    if (userData) {
+      fetchTokenStatus()
+    }
+  }, [userData])
+
+  const mainNavItems = [
+    { href: "/", label: "Home", icon: "🏠" },
+    { href: "/solutions/data-collection", label: "Watchlist", icon: "📋" },
+    { href: "/solutions/ai-processing", label: "AI Processing", icon: "🤖" },
+    { href: "/species-recognition", label: "Species Recognition", icon: "🔍" },
+    { href: "/water-quality", label: "Water Quality", icon: "💧" },
+    { href: "/dashboard", label: "Dashboard", icon: "📊" },
+  ]
+
+  const moreNavItems = [
+    { href: "/solutions/population-trends", label: "Population Trends", icon: TrendingUp },
+    { href: "/solutions/conservation-insights", label: "Conservation", icon: Leaf },
+    { href: "/subscription", label: "Subscription", icon: Crown },
   ]
 
   const scrollToContact = () => {
@@ -26,79 +74,48 @@ export function Navigation() {
     }
   }
 
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/logout', { method: 'POST', credentials: 'include' })
+      localStorage.removeItem("profile")
+      localStorage.removeItem("user")
+      window.location.href = "/auth/login"
+    } catch (error) {
+      console.error("Logout error:", error)
+    }
+  }
+
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl bg-gradient-to-r from-slate-900/80 via-blue-900/80 to-cyan-900/80 border-b border-cyan-400/20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <Link href="/" className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-full flex items-center justify-center backdrop-blur-md border border-cyan-400/30">
-              <div className="w-4 h-4 bg-white rounded-full"></div>
-            </div>
-            <span className="text-xl font-bold text-white">AI-driven Biodiversity</span>
-          </Link>
-
-          {/* Desktop Navigation */}
-          <div className="hidden lg:block">
-            <div className="ml-10 flex items-baseline space-x-6">
-              {navItems.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="text-cyan-100 hover:text-white px-3 py-2 text-sm font-medium transition-colors hover:bg-white/10 rounded-lg backdrop-blur-sm"
-                >
-                  {item.label}
-                </Link>
-              ))}
-            </div>
-          </div>
-
-          <div className="hidden md:block">
-            <BubbleButton
-              onClick={scrollToContact}
-              className="bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 border-emerald-400/30 hover:from-emerald-400/30 hover:to-cyan-400/30"
-            >
-              Contact
-            </BubbleButton>
-          </div>
-
-          {/* Mobile menu button */}
-          <div className="lg:hidden">
-            <BubbleButton variant="ghost" size="sm" onClick={() => setIsMenuOpen(!isMenuOpen)} className="text-white">
-              {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-            </BubbleButton>
-          </div>
-        </div>
-
-        {/* Mobile Navigation */}
-        {isMenuOpen && (
-          <div className="lg:hidden">
-            <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 backdrop-blur-xl bg-slate-900/90 border-t border-cyan-400/20 rounded-b-2xl">
-              {navItems.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="text-cyan-100 hover:text-white block px-3 py-2 text-base font-medium transition-colors hover:bg-white/10 rounded-lg"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  {item.label}
-                </Link>
-              ))}
-              <div className="pt-2">
-                <BubbleButton
-                  onClick={() => {
-                    scrollToContact()
-                    setIsMenuOpen(false)
-                  }}
-                  className="w-full bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 border-emerald-400/30 hover:from-emerald-400/30 hover:to-cyan-400/30"
-                >
-                  Contact
-                </BubbleButton>
+    <>
+      <nav className="fixed top-0 left-0 right-0 z-50 backdrop-blur-2xl bg-gradient-to-r from-slate-900/95 via-blue-900/95 to-cyan-900/95 border-b border-gradient-to-r from-cyan-400/30 via-blue-400/20 to-cyan-400/30 shadow-2xl">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-20">
+            {/* Enhanced Logo */}
+            <Link href="/" className="flex items-center space-x-3 group">
+              <div className="relative">
+                <div className="w-12 h-12 bg-gradient-to-br from-cyan-400 via-blue-500 to-purple-600 rounded-2xl flex items-center justify-center backdrop-blur-md border border-cyan-400/40 shadow-lg group-hover:shadow-cyan-400/25 transition-all duration-300 group-hover:scale-105">
+                  <div className="w-6 h-6 bg-white rounded-full flex items-center justify-center">
+                    <div className="w-3 h-3 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-full animate-pulse"></div>
+                  </div>
+                </div>
+                <div className="absolute -inset-1 bg-gradient-to-r from-cyan-400/20 to-blue-500/20 rounded-2xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               </div>
-            </div>
-          </div>
-        )}
-      </div>
-    </nav>
-  )
-}
+              <div className="flex flex-col">
+                <span className="text-2xl font-bold bg-gradient-to-r from-white via-cyan-100 to-blue-100 bg-clip-text text-transparent group-hover:from-cyan-300 group-hover:to-blue-300 transition-all duration-300">
+                  AI-driven Biodiversity
+                </span>
+                <span className="text-xs text-cyan-300/70 font-medium tracking-wider">
+                  Marine Conservation Platform
+                </span>
+              </div>
+            </Link>
+
+            {/* Enhanced Desktop Navigation */}
+            <div className="hidden lg:flex items-center space-x-2">
+              <div className="flex items-center space-x-1 bg-white/5 backdrop-blur-md rounded-2xl p-2 border border-white/10">
+                {mainNavItems.map((item) => {
+                  const isActive = pathname === item.href
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item
