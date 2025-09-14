@@ -268,7 +268,7 @@ export class GeminiAIService {
 
   // Helper methods to parse AI responses into structured data
   private static parseSpeciesIdentification(text: string): SpeciesIdentificationResult {
-    console.log("[DEBUG] Raw AI response:", text)
+    console.log("[DEBUG] Raw AI response:")
     
     // Try to extract species name from various patterns
     const species = this.extractValue(text, "species") || 
