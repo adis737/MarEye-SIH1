@@ -111,11 +111,10 @@ export function SpeciesRecognitionSystem() {
       clearInterval(progressInterval)
       setAnalysisProgress(100)
 
-      if (!response.ok) {
-        throw new Error("Failed to analyze image")
-      }
-
       const data = await response.json()
+      if (!response.ok) {
+        throw new Error(data?.error || "Failed to analyze image")
+      }
 
       if (data.success) {
         setAnalysisResult({
@@ -147,6 +146,22 @@ export function SpeciesRecognitionSystem() {
     if (confidence >= 90) return "default"
     if (confidence >= 70) return "secondary"
     return "outline"
+  }
+
+  const getConfidenceLabel = (confidence: number) => {
+    if (confidence >= 90) return "Very High"
+    if (confidence >= 80) return "High"
+    if (confidence >= 70) return "Medium"
+    if (confidence >= 50) return "Low"
+    return "Very Low"
+  }
+
+  const getConfidenceRangeText = (confidence: number) => {
+    if (confidence >= 90) return "(90-100%)"
+    if (confidence >= 80) return "(80-89%)"
+    if (confidence >= 70) return "(70-79%)"
+    if (confidence >= 50) return "(50-69%)"
+    return "(<50%)"
   }
 
   const getConservationStatusColor = (status: string) => {
@@ -294,56 +309,75 @@ export function SpeciesRecognitionSystem() {
                 </div>
 
                 {/* Species Identification */}
-                <div className="space-y-3">
+                <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <h3 className="text-xl font-bold text-card-foreground">{analysisResult.species}</h3>
-                    <Badge variant={getConfidenceBadgeVariant(analysisResult.confidence)}>
-                      <span className={getConfidenceColor(analysisResult.confidence)}>
-                        {analysisResult.confidence}% confidence
-                      </span>
+                    <Badge className="bg-primary text-white border-primary">
+                      {analysisResult.confidence}% confidence
                     </Badge>
                   </div>
 
-                  {analysisResult.commonName && (
-                    <p className="text-muted-foreground italic">Common name: {analysisResult.commonName}</p>
-                  )}
-
-                  <p className="text-sm text-muted-foreground font-mono">{analysisResult.scientificName}</p>
+                  {/* Summary paragraph under title */}
+                  <p className="text-sm text-muted-foreground">
+                    {`Based on the provided image, the organism is most likely ${analysisResult.species} (${analysisResult.scientificName}). `}
+                    {`Confidence level: ${getConfidenceLabel(analysisResult.confidence)} ${getConfidenceRangeText(analysisResult.confidence)}. `}
+                    {`The image may not allow definitive species-level identification within closely related taxa. `}
+                    {`Clearer images highlighting diagnostic features (e.g., fin ray counts, scale patterns) would increase confidence.`}
+                  </p>
                 </div>
 
                 {/* Classification */}
                 <div className="space-y-3">
                   <h4 className="font-semibold text-card-foreground">Taxonomic Classification</h4>
-                  <div className="grid grid-cols-2 gap-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Kingdom:</span>
-                      <span className="text-card-foreground">{analysisResult.classification.kingdom}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Phylum:</span>
-                      <span className="text-card-foreground">{analysisResult.classification.phylum}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Class:</span>
-                      <span className="text-card-foreground">{analysisResult.classification.class}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Order:</span>
-                      <span className="text-card-foreground">{analysisResult.classification.order}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Family:</span>
-                      <span className="text-card-foreground">{analysisResult.classification.family}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Genus:</span>
-                      <span className="text-card-foreground">{analysisResult.classification.genus}</span>
-                    </div>
+                  <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-sm">
+                    {analysisResult.classification.kingdom && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-muted-foreground">Kingdom:</span>
+                        <span className="text-card-foreground font-medium">{analysisResult.classification.kingdom}</span>
+                      </div>
+                    )}
+                    {analysisResult.classification.phylum && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-muted-foreground">Phylum:</span>
+                        <span className="text-card-foreground font-medium">{analysisResult.classification.phylum}</span>
+                      </div>
+                    )}
+                    {analysisResult.classification.class && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-muted-foreground">Class:</span>
+                        <span className="text-card-foreground font-medium">{analysisResult.classification.class}</span>
+                      </div>
+                    )}
+                    {analysisResult.classification.order && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-muted-foreground">Order:</span>
+                        <span className="text-card-foreground font-medium">{analysisResult.classification.order}</span>
+                      </div>
+                    )}
+                    {analysisResult.classification.family && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-muted-foreground">Family:</span>
+                        <span className="text-card-foreground font-medium">{analysisResult.classification.family}</span>
+                      </div>
+                    )}
+                    {analysisResult.classification.genus && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-muted-foreground">Genus:</span>
+                        <span className="text-card-foreground font-medium">{analysisResult.classification.genus}</span>
+                      </div>
+                    )}
                   </div>
+
+                  {/* Show message if most classification data is missing */}
+                  {Object.values(analysisResult.classification).filter(Boolean).length < 3 && (
+                    <p className="text-xs text-muted-foreground italic">
+                      Limited taxonomic information available from current analysis
+                    </p>
+                  )}
                 </div>
 
                 {/* Conservation Status */}
-                <div className="space-y-3">
+                <div className="space-y-2">
                   <h4 className="font-semibold text-card-foreground">Conservation Information</h4>
                   <div className="flex items-center gap-2">
                     <div
@@ -351,7 +385,7 @@ export function SpeciesRecognitionSystem() {
                     ></div>
                     <span className="text-sm text-card-foreground">Status: {analysisResult.conservationStatus}</span>
                   </div>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-[13px] leading-relaxed text-muted-foreground">
                     <strong>Habitat:</strong> {analysisResult.habitat}
                   </p>
                 </div>
@@ -361,11 +395,14 @@ export function SpeciesRecognitionSystem() {
                   <div className="space-y-3">
                     <h4 className="font-semibold text-card-foreground">Known Threats</h4>
                     <div className="flex flex-wrap gap-2">
-                      {analysisResult.threats.map((threat, index) => (
+                      {analysisResult.threats.slice(0,4).map((threat, index) => (
                         <Badge key={index} variant="outline" className="text-xs">
                           {threat}
                         </Badge>
                       ))}
+                      {analysisResult.threats.length > 4 && (
+                        <Badge variant="secondary" className="text-xs">+{analysisResult.threats.length - 4} more</Badge>
+                      )}
                     </div>
                   </div>
                 )}
