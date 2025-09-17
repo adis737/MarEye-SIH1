@@ -5,7 +5,10 @@ import { GeistMono } from "geist/font/mono"
 import { Analytics } from "@vercel/analytics/next"
 import { Suspense } from "react"
 import { BubbleCursor } from "@/components/bubble-cursor"
-import { FloatingUpgradeButton } from "@/components/floating-upgrade-button"
+
+import { DeepSeaBackground } from "@/components/deep-sea-background"
+import { Chatbot } from "@/components/chatbot"
+
 import "./globals.css"
 
 export const metadata: Metadata = {
@@ -31,9 +34,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable}`}>
+        <DeepSeaBackground />
         <BubbleCursor />
         <Suspense fallback={<div>Loading...</div>}>{children}</Suspense>
-        <FloatingUpgradeButton />
+
+        <Chatbot />
+
         <Analytics />
       </body>
     </html>
