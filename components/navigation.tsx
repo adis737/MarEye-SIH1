@@ -57,123 +57,125 @@ export function Navigation() {
 
   return (
     <>
-      <nav className="fixed top-0 left-0 right-0 z-50 backdrop-blur-2xl bg-gradient-to-r from-slate-900/95 via-blue-900/95 to-cyan-900/95 border-b border-gradient-to-r from-cyan-400/30 via-blue-400/20 to-cyan-400/30 shadow-2xl">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-20">
-            {/* Enhanced Logo */}
-            <Link href="/" className="flex items-center space-x-3 group">
-              <div className="relative">
-                <div className="w-12 h-12 bg-gradient-to-br from-cyan-400 via-blue-500 to-purple-600 rounded-2xl flex items-center justify-center backdrop-blur-md border border-cyan-400/40 shadow-lg group-hover:shadow-cyan-400/25 transition-all duration-300 group-hover:scale-105">
-                  <div className="w-6 h-6 bg-white rounded-full flex items-center justify-center">
-                    <div className="w-3 h-3 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-full animate-pulse"></div>
-                  </div>
-                </div>
-                <div className="absolute -inset-1 bg-gradient-to-r from-cyan-400/20 to-blue-500/20 rounded-2xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              </div>
-              <div className="flex flex-col">
-                <span className="text-2xl font-bold bg-gradient-to-r from-white via-cyan-100 to-blue-100 bg-clip-text text-transparent group-hover:from-cyan-300 group-hover:to-blue-300 transition-all duration-300">
-                  AI-driven Biodiversity
-                </span>
-                <span className="text-xs text-cyan-300/70 font-medium tracking-wider">
-                  Marine Conservation Platform
-                </span>
-              </div>
-            </Link>
-
-            {/* Enhanced Desktop Navigation */}
-            <div className="hidden lg:flex items-center space-x-2">
-              <div className="flex items-center space-x-1 bg-white/5 backdrop-blur-md rounded-2xl p-2 border border-white/10">
-                {navItems.map((item) => {
-                  const isActive = pathname === item.href
-                  return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      className={`relative flex items-center space-x-2 px-4 py-2.5 text-sm font-medium rounded-xl transition-all duration-300 group ${
-                        isActive
-                          ? "text-white bg-gradient-to-r from-cyan-400/20 to-blue-500/20 border border-cyan-400/30 shadow-lg shadow-cyan-400/10"
-                          : "text-cyan-100 hover:text-white hover:bg-white/10"
-                      }`}
-                    >
-                      <span className="text-lg">{item.icon}</span>
-                      <span>{item.label}</span>
-                      {isActive && (
-                        <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-cyan-400 rounded-full"></div>
-                      )}
-                    </Link>
-                  )
-                })}
-              </div>
-
-              {/* Enhanced Profile Dropdown */}
-              <div className="relative ml-4">
-                <button
-                  onClick={() => setIsProfileOpen(!isProfileOpen)}
-                  className="flex items-center space-x-3 p-2 rounded-2xl bg-white/5 backdrop-blur-md border border-white/10 hover:bg-white/10 transition-all duration-300 group"
-                >
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-slate-950/80 backdrop-blur-md border-b border-slate-800/50 shadow-xl">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-center h-18 relative w-full">
+            {/* Centered Navigation Container */}
+            <div className="flex items-center space-x-4">
+              {/* Logo and Brand */}
+              <div className="flex items-center space-x-2">
+                <Link href="/" className="flex items-center group">
                   <div className="relative">
-                    <div className="w-10 h-10 rounded-xl overflow-hidden border-2 border-cyan-400/40 group-hover:border-cyan-300 transition-colors duration-300">
-                      {avatar ? (
-                        <img src={avatar} alt="Avatar" className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-cyan-400/20 to-blue-500/20 flex items-center justify-center">
-                          <User className="w-5 h-5 text-cyan-300" />
-                        </div>
-                      )}
+                    <div className="w-8 h-8 bg-gradient-to-br from-cyan-400 via-blue-500 to-purple-600 rounded-lg flex items-center justify-center border border-cyan-400/40 shadow-lg group-hover:shadow-cyan-400/25 transition-all duration-300 group-hover:scale-105">
+                      <div className="w-4 h-4 bg-white rounded-full flex items-center justify-center">
+                        <div className="w-2 h-2 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-full animate-pulse"></div>
+                      </div>
                     </div>
-                    <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-400 rounded-full border-2 border-slate-900"></div>
+                    <div className="absolute -inset-1 bg-gradient-to-r from-cyan-400/20 to-blue-500/20 rounded-lg blur opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                   </div>
-                  <div className="hidden xl:block text-left">
-                    <div className="text-sm font-medium text-white">
-                      {userData?.firstName || "User"}
-                    </div>
-                    <div className="text-xs text-cyan-300/70">
-                      {userData?.email || "user@example.com"}
-                    </div>
-                  </div>
-                  <ChevronDown className={`w-4 h-4 text-cyan-300 transition-transform duration-300 ${isProfileOpen ? 'rotate-180' : ''}`} />
-                </button>
-
-                {/* Profile Dropdown Menu */}
-                {isProfileOpen && (
-                  <div className="absolute right-0 mt-2 w-64 bg-slate-900/95 backdrop-blur-2xl rounded-2xl border border-white/10 shadow-2xl py-2 z-50">
-                    <div className="px-4 py-3 border-b border-white/10">
-                      <div className="text-sm font-medium text-white">{userData?.firstName} {userData?.lastName}</div>
-                      <div className="text-xs text-cyan-300/70">{userData?.email}</div>
-                    </div>
-                    <Link
-                      href="/profile"
-                      className="flex items-center space-x-3 px-4 py-3 text-sm text-cyan-100 hover:text-white hover:bg-white/10 transition-colors duration-200"
-                      onClick={() => setIsProfileOpen(false)}
-                    >
-                      <User className="w-4 h-4" />
-                      <span>Profile Settings</span>
-                    </Link>
-                    <Link
-                      href="/dashboard"
-                      className="flex items-center space-x-3 px-4 py-3 text-sm text-cyan-100 hover:text-white hover:bg-white/10 transition-colors duration-200"
-                      onClick={() => setIsProfileOpen(false)}
-                    >
-                      <Settings className="w-4 h-4" />
-                      <span>Dashboard</span>
-                    </Link>
-                    <div className="border-t border-white/10 my-2"></div>
-                    <button
-                      onClick={handleLogout}
-                      className="flex items-center space-x-3 px-4 py-3 text-sm text-red-300 hover:text-red-200 hover:bg-red-500/10 transition-colors duration-200 w-full text-left"
-                    >
-                      <LogOut className="w-4 h-4" />
-                      <span>Logout</span>
-                    </button>
-                  </div>
-                )}
+                </Link>
+                
+                {/* Brand Text */}
+                <div className="hidden lg:flex flex-col">
+                  <span className="text-xs font-bold bg-gradient-to-r from-white via-cyan-100 to-blue-100 bg-clip-text text-transparent">
+                    AI-driven Biodiversity
+                  </span>
+                  <span className="text-[8px] text-cyan-300/70 font-medium tracking-wider">
+                    Marine Conservation Platform
+                  </span>
+                </div>
               </div>
 
-              {/* Enhanced Contact Button */}
-              <div className="ml-4">
+              {/* Navigation Links */}
+              <div className="hidden lg:flex items-center">
+                <div className="flex items-center bg-white/10 rounded-lg p-1 border border-white/10">
+                  {navItems.map((item) => {
+                    const isActive = pathname === item.href
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        className={`relative flex items-center space-x-1 px-2 py-1.5 text-xs font-medium rounded-md transition-all duration-300 group ${
+                          isActive
+                            ? "text-white"
+                            : "text-cyan-100 hover:text-white hover:bg-white/10"
+                        }`}
+                      >
+                        <span className="text-sm">{item.icon}</span>
+                        <span className="whitespace-nowrap">{item.label}</span>
+                      </Link>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* Profile and Contact */}
+              <div className="flex items-center space-x-2">
+                {/* Profile Dropdown */}
+                <div className="relative">
+                  <button
+                    onClick={() => setIsProfileOpen(!isProfileOpen)}
+                    className="flex items-center space-x-1 p-1.5 rounded-lg bg-white/10 border border-white/10 hover:bg-white/15 transition-all duration-300 group"
+                  >
+                    <div className="relative">
+                      <div className="w-6 h-6 rounded-md overflow-hidden border-2 border-cyan-400/40 group-hover:border-cyan-300 transition-colors duration-300">
+                        {avatar ? (
+                          <img src={avatar} alt="Avatar" className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full bg-gradient-to-br from-cyan-400/20 to-blue-500/20 flex items-center justify-center">
+                            <User className="w-3 h-3 text-cyan-300" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="absolute -bottom-0.5 -right-0.5 w-2 h-2 bg-green-400 rounded-full border border-slate-900"></div>
+                    </div>
+                    <div className="hidden xl:block text-left">
+                      <div className="text-[10px] font-medium text-white">
+                        {userData?.firstName || "User"}
+                      </div>
+                    </div>
+                    <ChevronDown className={`w-3 h-3 text-cyan-300 transition-transform duration-300 ${isProfileOpen ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  {/* Profile Dropdown Menu */}
+                  {isProfileOpen && (
+                    <div className="absolute right-0 mt-2 w-64 bg-slate-900/95 backdrop-blur-2xl rounded-2xl border border-white/10 shadow-2xl py-2 z-50">
+                      <div className="px-4 py-3 border-b border-white/10">
+                        <div className="text-sm font-medium text-white">{userData?.firstName} {userData?.lastName}</div>
+                        <div className="text-xs text-cyan-300/70">{userData?.email}</div>
+                      </div>
+                      <Link
+                        href="/profile"
+                        className="flex items-center space-x-3 px-4 py-3 text-sm text-cyan-100 hover:text-white hover:bg-white/10 transition-colors duration-200"
+                        onClick={() => setIsProfileOpen(false)}
+                      >
+                        <User className="w-4 h-4" />
+                        <span>Profile Settings</span>
+                      </Link>
+                      <Link
+                        href="/dashboard"
+                        className="flex items-center space-x-3 px-4 py-3 text-sm text-cyan-100 hover:text-white hover:bg-white/10 transition-colors duration-200"
+                        onClick={() => setIsProfileOpen(false)}
+                      >
+                        <Settings className="w-4 h-4" />
+                        <span>Dashboard</span>
+                      </Link>
+                      <div className="border-t border-white/10 my-2"></div>
+                      <button
+                        onClick={handleLogout}
+                        className="flex items-center space-x-3 px-4 py-3 text-sm text-red-300 hover:text-red-200 hover:bg-red-500/10 transition-colors duration-200 w-full text-left"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        <span>Logout</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Contact Button */}
                 <BubbleButton
                   onClick={scrollToContact}
-                  className="bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 border-emerald-400/30 hover:from-emerald-400/30 hover:to-cyan-400/30 hover:shadow-lg hover:shadow-emerald-400/25 transition-all duration-300"
+                  className="bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 border-emerald-400/30 hover:from-emerald-400/30 hover:to-cyan-400/30 hover:shadow-lg hover:shadow-emerald-400/25 transition-all duration-300 px-2 py-1.5 text-[10px]"
                 >
                   Contact Us
                 </BubbleButton>

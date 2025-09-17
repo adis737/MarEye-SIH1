@@ -182,13 +182,13 @@ export function SpeciesRecognitionSystem() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto p-6 space-y-8">
+    <div className="max-w-7xl mx-auto p-6 space-y-8 relative z-10 pt-24">
       <div className="text-center space-y-4">
         <div className="flex items-center justify-center gap-2 mb-4">
-          <Microscope className="h-8 w-8 text-primary" />
-          <h1 className="text-3xl font-bold text-foreground">AI Species Recognition System</h1>
+          <Microscope className="h-8 w-8 text-cyan-400" />
+          <h1 className="text-3xl font-bold text-white">AI Species Recognition System</h1>
         </div>
-        <p className="text-lg text-muted-foreground max-w-3xl mx-auto text-balance">
+        <p className="text-lg text-cyan-100 max-w-3xl mx-auto text-balance">
           Upload deep-sea organism images for instant AI-powered species identification, classification, and
           conservation analysis.
         </p>
@@ -196,17 +196,17 @@ export function SpeciesRecognitionSystem() {
 
       <div className="grid lg:grid-cols-2 gap-8">
         {/* Image Upload Section */}
-        <Card className="bg-card border-border">
+        <Card className="bg-slate-900/90 backdrop-blur-sm border-slate-700">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-card-foreground">
-              <Upload className="h-5 w-5 text-primary" />
+            <CardTitle className="flex items-center gap-2 text-white">
+              <Upload className="h-5 w-5 text-cyan-400" />
               Image Upload & Analysis
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Upload Area */}
             <div
-              className="border-2 border-dashed border-border rounded-lg p-8 text-center transition-colors hover:border-primary/50 cursor-pointer"
+              className="border-2 border-dashed border-slate-600 rounded-lg p-8 text-center transition-colors hover:border-cyan-400/50 cursor-pointer"
               onDragOver={handleDragOver}
               onDrop={handleDrop}
               onClick={() => fileInputRef.current?.click()}
@@ -223,18 +223,18 @@ export function SpeciesRecognitionSystem() {
                       className="object-cover"
                     />
                   </div>
-                  <Button variant="outline" className="bg-transparent">
+                  <Button variant="outline" className="bg-transparent border-slate-600 text-white hover:bg-slate-800">
                     <FileImage className="h-4 w-4 mr-2" />
                     Change Image
                   </Button>
                 </div>
               ) : (
                 <div className="space-y-4">
-                  <Camera className="h-16 w-16 text-muted-foreground mx-auto" />
+                  <Camera className="h-16 w-16 text-slate-400 mx-auto" />
                   <div>
-                    <p className="text-lg font-medium text-foreground">Upload Deep-Sea Organism Image</p>
-                    <p className="text-sm text-muted-foreground mt-2">Drag and drop or click to select</p>
-                    <p className="text-xs text-muted-foreground mt-1">Supports: JPG, PNG, WebP (max 10MB)</p>
+                    <p className="text-lg font-medium text-white">Upload Deep-Sea Organism Image</p>
+                    <p className="text-sm text-cyan-200 mt-2">Drag and drop or click to select</p>
+                    <p className="text-xs text-slate-400 mt-1">Supports: JPG, PNG, WebP (max 10MB)</p>
                   </div>
                 </div>
               )}
@@ -242,12 +242,12 @@ export function SpeciesRecognitionSystem() {
 
             {/* Additional Context */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-card-foreground">Additional Context (Optional)</label>
+              <label className="text-sm font-medium text-white">Additional Context (Optional)</label>
               <Textarea
                 placeholder="Provide additional information about the specimen: location, depth, habitat conditions, or any other relevant details..."
                 value={additionalContext}
                 onChange={(e) => setAdditionalContext(e.target.value)}
-                className="bg-input border-border min-h-[80px]"
+                className="bg-slate-800 border-slate-600 text-white placeholder:text-slate-400 min-h-[80px]"
               />
             </div>
 
@@ -255,8 +255,8 @@ export function SpeciesRecognitionSystem() {
             {isAnalyzing && (
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                  <span className="text-sm font-medium text-foreground">Analyzing with Gemini AI...</span>
+                  <Loader2 className="h-4 w-4 animate-spin text-cyan-400" />
+                  <span className="text-sm font-medium text-white">Analyzing with Gemini AI...</span>
                 </div>
                 <Progress value={analysisProgress} className="w-full" />
               </div>
@@ -264,9 +264,9 @@ export function SpeciesRecognitionSystem() {
 
             {/* Error Display */}
             {error && (
-              <div className="flex items-center gap-2 p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
-                <AlertCircle className="h-4 w-4 text-destructive" />
-                <span className="text-sm text-destructive">{error}</span>
+              <div className="flex items-center gap-2 p-3 bg-red-900/20 border border-red-500/30 rounded-lg">
+                <AlertCircle className="h-4 w-4 text-red-400" />
+                <span className="text-sm text-red-300">{error}</span>
               </div>
             )}
 
@@ -274,7 +274,7 @@ export function SpeciesRecognitionSystem() {
             <Button
               onClick={analyzeImage}
               disabled={!selectedImage || isAnalyzing}
-              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
+              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
             >
               {isAnalyzing ? (
                 <>
