@@ -17,6 +17,17 @@ export function Navigation() {
   const [subscription, setSubscription] = useState<any>(null)
   const pathname = usePathname()
 
+  const navItems = [
+    { href: "/", label: "Home", icon: "🏠" },
+    { href: "/dashboard", label: "Dashboard", icon: "📊" },
+    { href: "/species-recognition", label: "Species ID", icon: "🐠" },
+    { href: "/water-quality", label: "Water Quality", icon: "💧" },
+    { href: "/solutions/ai-processing", label: "AI Tools", icon: "🤖" },
+    { href: "/solutions/conservation-insights", label: "Conservation", icon: "🌊" },
+    { href: "/solutions/population-trends", label: "Trends", icon: "📈" },
+    { href: "/solutions/data-collection", label: "Data", icon: "📋" }
+  ]
+
   useEffect(() => {
     try {
       const stored = localStorage.getItem("profile")
@@ -62,7 +73,7 @@ export function Navigation() {
   ]
 
   const moreNavItems = [
-    { href: "/solutions/population-trends", label: "Population Trends", icon: TrendingUp },
+    { href: "/solutions/population-trends", label: "Abundance", icon: TrendingUp },
     { href: "/solutions/conservation-insights", label: "Conservation", icon: Leaf },
     { href: "/subscription", label: "Subscription", icon: Crown },
   ]
@@ -88,36 +99,28 @@ export function Navigation() {
   return (
     <>
       <nav className="fixed top-0 left-0 right-0 z-50 bg-slate-950/80 backdrop-blur-md border-b border-slate-800/50 shadow-xl">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-center h-18 relative w-full">
+        <div className="w-full px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-start h-18 relative w-full">
             {/* Centered Navigation Container */}
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center w-full">
               {/* Logo and Brand */}
               <div className="flex items-center space-x-2">
-                <Link href="/" className="flex items-center group">
-                  <div className="relative">
-                    <div className="w-8 h-8 bg-gradient-to-br from-cyan-400 via-blue-500 to-purple-600 rounded-lg flex items-center justify-center border border-cyan-400/40 shadow-lg group-hover:shadow-cyan-400/25 transition-all duration-300 group-hover:scale-105">
-                      <div className="w-4 h-4 bg-white rounded-full flex items-center justify-center">
-                        <div className="w-2 h-2 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-full animate-pulse"></div>
-                      </div>
-                    </div>
-                    <div className="absolute -inset-1 bg-gradient-to-r from-cyan-400/20 to-blue-500/20 rounded-lg blur opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                {/* Brand Logo + Text */}
+                <div className="hidden lg:flex items-center space-x-2">
+                  <img src="/placeholder-logo.png" alt="Oceanova Logo" className="w-20 h-20 drop-shadow" />
+                  <div className="flex flex-col leading-tight">
+                    <span className="text-xl font-extrabold bg-gradient-to-r from-white via-cyan-100 to-blue-100 bg-clip-text text-transparent tracking-wide">
+                      OCEANOVA
+                    </span>
+                    <span className="text-xs text-cyan-300/40 font-medium tracking-wider">
+                      Marine Conservation Platform
+                    </span>
                   </div>
-                </Link>
-                
-                {/* Brand Text */}
-                <div className="hidden lg:flex flex-col">
-                  <span className="text-xs font-bold bg-gradient-to-r from-white via-cyan-100 to-blue-100 bg-clip-text text-transparent">
-                    AI-driven Biodiversity
-                  </span>
-                  <span className="text-[8px] text-cyan-300/70 font-medium tracking-wider">
-                    Marine Conservation Platform
-                  </span>
                 </div>
               </div>
 
               {/* Navigation Links */}
-              <div className="hidden lg:flex items-center">
+              <div className="hidden lg:flex items-center ml-6">
                 <div className="flex items-center bg-white/10 rounded-lg p-1 border border-white/10">
                   {navItems.map((item) => {
                     const isActive = pathname === item.href
@@ -140,7 +143,7 @@ export function Navigation() {
               </div>
 
               {/* Profile and Contact */}
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-2 ml-auto pl-2">
                 {/* Profile Dropdown */}
                 <div className="relative">
                   <button

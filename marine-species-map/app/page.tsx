@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Search, MapPin, Fish, Waves, Loader2, Activity, Thermometer, Gauge, Globe } from "lucide-react"
+import { Search, MapPin, Fish, Waves, Loader2, Globe, Activity, Thermometer, Gauge, Calendar } from "lucide-react"
 import dynamic from "next/dynamic"
 import * as XLSX from "xlsx"
 
@@ -13,7 +13,7 @@ import * as XLSX from "xlsx"
 const MarineMap = dynamic(() => import("@/components/marine-map"), {
   ssr: false,
   loading: () => (
-    <div className="w-full h-[600px] bg-slate-800 animate-pulse rounded-lg flex items-center justify-center">
+        <div className="w-full h-[600px] bg-slate-800 animate-pulse rounded-lg flex items-center justify-center">
       <div className="text-center">
         <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2 text-blue-400" />
         <p className="text-slate-300">Loading deep sea research map...</p>
@@ -40,7 +40,7 @@ interface SearchSuggestion {
   commonNames: string[]
 }
 
-export default function PopulationTrendsPage() {
+export default function DeepSeaResearchDashboard() {
   const [searchQuery, setSearchQuery] = useState("")
   const [suggestions, setSuggestions] = useState<SearchSuggestion[]>([])
   const [selectedSpecies, setSelectedSpecies] = useState<string | null>(null)
@@ -52,7 +52,8 @@ export default function PopulationTrendsPage() {
   const [avgTemp, setAvgTemp] = useState(0)
   const [hasSearched, setHasSearched] = useState(false)
   const [currentTime, setCurrentTime] = useState("")
-  const searchTimeoutRef = useRef<NodeJS.Timeout>()
+  const searchTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined)
+
 
   const fetchSpeciesData = async (species?: string) => {
     setLoading(true)
@@ -66,6 +67,7 @@ export default function PopulationTrendsPage() {
         return
       }
 
+      console.log(`[v0] Fetching OBIS occurrences for: ${name}`)
       const response = await fetch("/api/obis-species", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -74,6 +76,8 @@ export default function PopulationTrendsPage() {
 
       if (!response.ok) throw new Error(`OBIS route failed ${response.status}`)
       const data = await response.json()
+
+      console.log(`[v0] OBIS returned ${data.observations?.length || 0} observations`)
 
       const processedData: SpeciesData[] = (data.observations || []).map((o: any) => ({
         id: o.id,
@@ -87,11 +91,13 @@ export default function PopulationTrendsPage() {
         lastUpdated: o.lastUpdated || new Date().toISOString(),
       }))
 
+      // Only use real OBIS data - no fallback data
       setSpeciesData(processedData)
       setTotalSpeciesCount(new Set(processedData.map((d) => d.scientificName)).size)
       setAvgDepth(data.summary?.avgDepth || 0)
       setAvgTemp(data.summary?.avgTemp ?? 0)
     } catch (error) {
+      console.error("[v0] Error fetching OBIS species data:", error)
       setSpeciesData([])
       setTotalSpeciesCount(0)
       setAvgDepth(0)
@@ -108,6 +114,7 @@ export default function PopulationTrendsPage() {
     }
 
     try {
+      // Use only Groq API for suggestions - no hardcoded data
       const response = await fetch("/api/search-suggestions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -118,12 +125,17 @@ export default function PopulationTrendsPage() {
         const data = await response.json()
         setSuggestions(data.suggestions || [])
       } else {
+        console.error("Groq API failed:", response.status)
         setSuggestions([])
       }
-    } catch {
+    } catch (error) {
+      console.error("Error getting suggestions from Groq API:", error)
       setSuggestions([])
     }
   }
+
+
+
 
   const handleExportData = () => {
     if (speciesData.length === 0) {
@@ -131,6 +143,7 @@ export default function PopulationTrendsPage() {
       return
     }
 
+    // Prepare data for Excel export
     const exportData = speciesData.map((species, index) => ({
       "Record ID": index + 1,
       "Species Name": species.species,
@@ -146,31 +159,37 @@ export default function PopulationTrendsPage() {
                    species.depth > 1000 ? "Bathyal" : "Mesopelagic"
     }))
 
+    // Create workbook and worksheet
     const wb = XLSX.utils.book_new()
     const ws = XLSX.utils.json_to_sheet(exportData)
 
+    // Set column widths
     const colWidths = [
-      { wch: 10 },
-      { wch: 25 },
-      { wch: 30 },
-      { wch: 15 },
-      { wch: 12 },
-      { wch: 12 },
-      { wch: 15 },
-      { wch: 15 },
-      { wch: 15 },
-      { wch: 15 }
+      { wch: 10 }, // Record ID
+      { wch: 25 }, // Species Name
+      { wch: 30 }, // Scientific Name
+      { wch: 15 }, // Species Count
+      { wch: 12 }, // Latitude
+      { wch: 12 }, // Longitude
+      { wch: 15 }, // Depth
+      { wch: 15 }, // Temperature
+      { wch: 15 }, // Last Updated
+      { wch: 15 }  // Depth Zone
     ]
-    ;(ws as any)['!cols'] = colWidths
+    ws['!cols'] = colWidths
 
+    // Add worksheet to workbook
     XLSX.utils.book_append_sheet(wb, ws, "Deep Sea Species Data")
 
+    // Generate filename with timestamp
     const timestamp = new Date().toISOString().split('T')[0]
     const filename = `deep_sea_species_${selectedSpecies || 'all'}_${timestamp}.xlsx`
 
+    // Export file
     XLSX.writeFile(wb, filename)
   }
 
+  // Handle search input changes with debouncing
   const handleSearchChange = (value: string) => {
     setSearchQuery(value)
     setShowSuggestions(true)
@@ -184,6 +203,7 @@ export default function PopulationTrendsPage() {
     }, 300)
   }
 
+  // Handle species selection
   const handleSpeciesSelect = (species: string) => {
     setSelectedSpecies(species)
     setSearchQuery(species)
@@ -210,6 +230,10 @@ export default function PopulationTrendsPage() {
     }
   }
 
+  // Initial data load - removed to prevent showing all species on page load
+  // Data will only be loaded when a specific species is searched
+
+  // Update time on client side to prevent hydration mismatch
   useEffect(() => {
     const updateTime = () => {
       setCurrentTime(new Date().toLocaleTimeString())
@@ -219,6 +243,7 @@ export default function PopulationTrendsPage() {
     return () => clearInterval(interval)
   }, [])
 
+  // Close suggestions when clicking outside
   useEffect(() => {
     const handleClickOutside = () => setShowSuggestions(false)
     document.addEventListener("click", handleClickOutside)
@@ -300,6 +325,7 @@ export default function PopulationTrendsPage() {
             )}
           </div>
 
+          {/* Selected Species Info */}
           {selectedSpecies && (
             <div className="mt-6 flex items-center gap-3">
               <Badge className="bg-white/20 text-white border-white/30 px-4 py-2 hover:bg-white/30">
@@ -312,7 +338,7 @@ export default function PopulationTrendsPage() {
       </div>
 
       <div className="flex">
-        <div className="w-80 bg-slate-800 shadow-xl border-r border-slate-700 min-h-screen relative z-10">
+        <div className="w-80 bg-slate-800 shadow-xl border-r border-slate-700 min-h-screen">
           <div className="p-6">
             <h2 className="text-xl font-bold text-slate-100 mb-6">Research Dashboard</h2>
 
@@ -395,8 +421,8 @@ export default function PopulationTrendsPage() {
         </div>
 
         {/* Main Map Area */}
-        <div className="flex-1 p-6 relative z-0">
-          <Card className="overflow-hidden border-0 shadow-xl relative z-0">
+        <div className="flex-1 p-6">
+          <Card className="overflow-hidden border-0 shadow-xl">
             <div className="p-6 bg-gradient-to-r from-blue-600 to-blue-700 text-white">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
