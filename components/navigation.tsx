@@ -4,13 +4,17 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { BubbleButton } from "@/components/bubble-button"
-import { Menu, X, User, LogOut, Settings, ChevronDown } from "lucide-react"
+import { Menu, X, User, LogOut, Settings, ChevronDown, Zap, Crown, Building2, MoreHorizontal, Phone, BarChart3, TrendingUp, Leaf } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
 
 export function Navigation() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
+  const [isMoreOpen, setIsMoreOpen] = useState(false)
   const [avatar, setAvatar] = useState<string>("")
   const [userData, setUserData] = useState<any>(null)
+  const [tokenStatus, setTokenStatus] = useState<any>(null)
+  const [subscription, setSubscription] = useState<any>(null)
   const pathname = usePathname()
 
   useEffect(() => {
@@ -26,15 +30,41 @@ export function Navigation() {
     } catch {}
   }, [])
 
-  const navItems = [
+  // Fetch token status and subscription info
+  useEffect(() => {
+    const fetchTokenStatus = async () => {
+      try {
+        const response = await fetch('/api/tokens/status', {
+          credentials: 'include'
+        })
+        const data = await response.json()
+        if (data.success) {
+          setTokenStatus(data.tokenStatus)
+          setSubscription(data.subscription)
+        }
+      } catch (error) {
+        console.error('Error fetching token status:', error)
+      }
+    }
+
+    if (userData) {
+      fetchTokenStatus()
+    }
+  }, [userData])
+
+  const mainNavItems = [
     { href: "/", label: "Home", icon: "🏠" },
-    { href: "/solutions/data-collection", label: "Data Collection", icon: "📊" },
+    { href: "/solutions/data-collection", label: "Watchlist", icon: "📋" },
     { href: "/solutions/ai-processing", label: "AI Processing", icon: "🤖" },
-    { href: "/solutions/population-trends", label: "Population Trends", icon: "📈" },
-    { href: "/solutions/conservation-insights", label: "Conservation", icon: "🌱" },
     { href: "/species-recognition", label: "Species Recognition", icon: "🔍" },
     { href: "/water-quality", label: "Water Quality", icon: "💧" },
-    { href: "/dashboard", label: "Dashboard", icon: "📋" },
+    { href: "/dashboard", label: "Dashboard", icon: "📊" },
+  ]
+
+  const moreNavItems = [
+    { href: "/solutions/population-trends", label: "Population Trends", icon: TrendingUp },
+    { href: "/solutions/conservation-insights", label: "Conservation", icon: Leaf },
+    { href: "/subscription", label: "Subscription", icon: Crown },
   ]
 
   const scrollToContact = () => {
@@ -200,10 +230,12 @@ export function Navigation() {
             <div className="lg:hidden">
               <div className="px-4 pt-4 pb-6 space-y-2 bg-slate-900/95 backdrop-blur-2xl border-t border-cyan-400/20 rounded-b-3xl shadow-2xl">
                 {navItems.map((item) => {
+
                   const isActive = pathname === item.href
                   return (
                     <Link
                       key={item.href}
+
                       href={item.href}
                       className={`flex items-center space-x-3 px-4 py-3 text-base font-medium rounded-xl transition-all duration-300 ${
                         isActive
@@ -286,3 +318,4 @@ export function Navigation() {
     </>
   )
 }
+
