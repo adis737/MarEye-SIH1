@@ -26,17 +26,12 @@ export function SubscriptionPlans({ currentPlan = 'basic', onPlanSelect }: Subsc
       return;
     }
 
-    if (plan.id === 'enterprise') {
-      toast.info("Please contact us for enterprise pricing");
-      return;
-    }
-
     if (plan.price === 0) {
       toast.info("This is a free plan");
       return;
     }
 
-    // Show payment form for paid plans
+    // Show payment form for all paid plans (including enterprise)
     setSelectedPlan(plan);
     setShowPaymentForm(true);
   };
@@ -106,8 +101,6 @@ export function SubscriptionPlans({ currentPlan = 'basic', onPlanSelect }: Subsc
             <div className="mt-4">
               {plan.price === 0 ? (
                 <div className="text-3xl font-bold text-green-600">Free</div>
-              ) : plan.id === 'enterprise' ? (
-                <div className="text-3xl font-bold text-emerald-600">Custom</div>
               ) : (
                 <div className="text-3xl font-bold">
                   ₹{plan.price}
@@ -149,8 +142,6 @@ export function SubscriptionPlans({ currentPlan = 'basic', onPlanSelect }: Subsc
                 "Processing..."
               ) : currentPlan === plan.id ? (
                 "Current Plan"
-              ) : plan.id === 'enterprise' ? (
-                "Contact Sales"
               ) : plan.price === 0 ? (
                 "Get Started"
               ) : (

@@ -2,8 +2,6 @@ import { Navigation } from "@/components/navigation"
 import { HeroSection } from "@/components/hero-section"
 import { SolutionSection } from "@/components/solution-section"
 import { InteractivePredictionSection } from "@/components/interactive-prediction-section"
-import { DataResultsSection } from "@/components/data-results-section"
-import { ContactSection } from "@/components/contact-section"
 import { ContaminationMap } from "@/components/contamination-map"
 import { BubbleCursor } from "@/components/bubble-cursor"
 import { cookies } from "next/headers"
@@ -23,7 +21,6 @@ export default function HomePage() {
         <HeroSection />
         <SolutionSection />
         <InteractivePredictionSection />
-        <DataResultsSection />
         <section className="py-20 bg-gradient-to-b from-slate-950 via-blue-950 to-cyan-950">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-12">
@@ -35,7 +32,6 @@ export default function HomePage() {
             <ContaminationMap />
           </div>
         </section>
-        <ContactSection />
       </main>
     </div>
   )

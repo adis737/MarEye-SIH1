@@ -269,17 +269,6 @@ function displayResults(data) {
     <div class="result-container">
       ${locationHeader}
       
-      <div class="data-status-notice" style="padding-bottom: 4px;">
-        <div class="notice-content">
-          <i class="fas fa-info-circle"></i>
-          <div>
-            <small style="font-size: 0.95rem;"><span style="color: #1e88e5;">Data Status</span>: This system attempts to fetch real ocean data from NOAA CoastWatch, OpenWeatherMap, Meteomatics and World Ocean Database. 
-            When real data is unavailable, it could be because geo coordinates are on land or latest data are yet to be updated.</small>
-            <br><small></small>
-          </div>
-        </div>
-      </div>
-      
       <div class="data-section">
         <h3><i class="fas fa-thermometer-half"></i> Temperature</h3>
         <div class="data-grid">

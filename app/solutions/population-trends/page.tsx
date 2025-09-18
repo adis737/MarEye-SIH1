@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Search, MapPin, Fish, Waves, Loader2, Activity, Thermometer, Gauge, Globe } from "lucide-react"
+import { HomeButton } from "@/components/home-button"
 import dynamic from "next/dynamic"
 import * as XLSX from "xlsx"
 
@@ -227,6 +228,7 @@ export default function PopulationTrendsPage() {
 
   return (
     <div className="min-h-screen bg-slate-900">
+      <HomeButton />
       <div className="bg-gradient-to-r from-blue-900 via-blue-800 to-blue-900 text-white shadow-xl">
         <div className="container mx-auto px-6 py-8">
           <div className="flex items-center gap-4 mb-6">
@@ -364,13 +366,6 @@ export default function PopulationTrendsPage() {
                   <div>
                     <div className="font-medium text-slate-100">OBIS Database</div>
                     <div className="text-sm text-slate-300">Global species occurrences</div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 p-3 bg-slate-700 rounded-lg">
-                  <div className="w-3 h-3 bg-purple-400 rounded-full"></div>
-                  <div>
-                    <div className="font-medium text-slate-100">Groq AI API</div>
-                    <div className="text-sm text-slate-300">Intelligent species suggestions</div>
                   </div>
                 </div>
               </div>

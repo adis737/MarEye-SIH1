@@ -46,7 +46,7 @@ export const SUBSCRIPTION_PLANS: Record<string, SubscriptionPlan> = {
   enterprise: {
     id: 'enterprise',
     name: 'Enterprise Plan',
-    price: 0, // Custom pricing
+    price: 999,
     currency: 'INR',
     dailyTokens: -1, // Unlimited
     features: [

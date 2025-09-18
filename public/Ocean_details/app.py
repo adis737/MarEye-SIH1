@@ -5,6 +5,12 @@ from datetime import datetime
 import geocoding
 import real_ocean_data
 
+# Mock nasa_data module for missing functionality
+class nasa_data:
+    @staticmethod
+    def get_par(lat, lon, date):
+        return None
+
 app = Flask(__name__)
 CORS(app)
 

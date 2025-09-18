@@ -1,6 +1,8 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
+import Link from "next/link"
 import { BubbleButton } from "@/components/bubble-button"
 import { ImageSlideshow } from "@/components/image-slideshow"
 import { ArrowRight, Microscope, Waves, Brain, Fish, Anchor } from "lucide-react"
@@ -12,6 +14,7 @@ interface HeroStats {
 }
 
 export function HeroSection() {
+  const router = useRouter()
   const [stats, setStats] = useState<HeroStats>({
     speciesIdentified: 0,
     waterQualityPoints: 0,
@@ -51,17 +54,13 @@ export function HeroSection() {
   }
 
   const scrollToSolutions = () => {
-    const solutionsSection = document.getElementById("solutions")
-    if (solutionsSection) {
-      solutionsSection.scrollIntoView({ behavior: "smooth" })
-    }
+    console.log("Explore Our Solution button clicked")
+    router.push("/subscription")
   }
 
   const scrollToData = () => {
-    const dataSection = document.getElementById("data-results")
-    if (dataSection) {
-      dataSection.scrollIntoView({ behavior: "smooth" })
-    }
+    console.log("View Research Data button clicked")
+    router.push("/solutions/data-collection")
   }
 
   return (
@@ -142,20 +141,22 @@ export function HeroSection() {
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4">
-              <BubbleButton
-                onClick={scrollToSolutions}
-                className="bg-gradient-to-r from-cyan-500/20 to-blue-600/20 border-cyan-400/30 hover:from-cyan-400/30 hover:to-blue-500/30 text-white group"
-              >
-                Explore Our Solution
-                <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
-              </BubbleButton>
-              <BubbleButton
-                onClick={scrollToData}
-                variant="outline"
-                className="border-cyan-400/30 hover:bg-cyan-500/10 bg-transparent text-cyan-100 hover:text-white"
-              >
-                View Research Data
-              </BubbleButton>
+              <Link href="/subscription">
+                <BubbleButton
+                  className="bg-gradient-to-r from-cyan-500/20 to-blue-600/20 border-cyan-400/30 hover:from-cyan-400/30 hover:to-blue-500/30 text-white group"
+                >
+                  Explore Our Solution
+                  <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                </BubbleButton>
+              </Link>
+              <Link href="/solutions/data-collection">
+                <BubbleButton
+                  variant="outline"
+                  className="border-cyan-400/30 hover:bg-cyan-500/10 bg-transparent text-cyan-100 hover:text-white"
+                >
+                  View Research Data
+                </BubbleButton>
+              </Link>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-8 mb-8">

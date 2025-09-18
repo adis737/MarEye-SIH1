@@ -258,7 +258,7 @@ export function SpeciesRecognitionSystem() {
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <Loader2 className="h-4 w-4 animate-spin text-cyan-400" />
-                  <span className="text-sm font-medium text-white">Analyzing with Gemini AI...</span>
+                  <span className="text-sm font-medium text-white">Analyzing...</span>
                 </div>
                 <Progress value={analysisProgress} className="w-full" />
               </div>

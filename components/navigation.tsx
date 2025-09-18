@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { BubbleButton } from "@/components/bubble-button"
 import { Menu, X, User, LogOut, Settings, ChevronDown, Zap, Crown, Building2, MoreHorizontal, Phone, BarChart3, TrendingUp, Leaf } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
@@ -16,6 +16,7 @@ export function Navigation() {
   const [tokenStatus, setTokenStatus] = useState<any>(null)
   const [subscription, setSubscription] = useState<any>(null)
   const pathname = usePathname()
+  const router = useRouter()
 
   const navItems = [
     { href: "/", label: "Home", icon: "🏠" },
@@ -78,11 +79,9 @@ export function Navigation() {
     { href: "/subscription", label: "Subscription", icon: Crown },
   ]
 
-  const scrollToContact = () => {
-    const contactSection = document.getElementById("contact")
-    if (contactSection) {
-      contactSection.scrollIntoView({ behavior: "smooth" })
-    }
+  const goToContact = () => {
+    console.log("Contact button clicked, navigating to /contact")
+    router.push("/contact")
   }
 
   const handleLogout = async () => {
@@ -120,7 +119,7 @@ export function Navigation() {
               </div>
 
               {/* Navigation Links */}
-              <div className="hidden lg:flex items-center ml-6">
+              <div className="hidden lg:flex items-center ml-8 flex-1 justify-center">
                 <div className="flex items-center bg-white/10 rounded-lg p-1 border border-white/10">
                   {navItems.map((item) => {
                     const isActive = pathname === item.href
@@ -143,7 +142,7 @@ export function Navigation() {
               </div>
 
               {/* Profile and Contact */}
-              <div className="flex items-center space-x-2 ml-auto pl-2">
+              <div className="flex items-center space-x-2 ml-4">
                 {/* Profile Dropdown */}
                 <div className="relative">
                   <button
@@ -206,12 +205,13 @@ export function Navigation() {
                 </div>
 
                 {/* Contact Button */}
-                <BubbleButton
-                  onClick={scrollToContact}
-                  className="bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 border-emerald-400/30 hover:from-emerald-400/30 hover:to-cyan-400/30 hover:shadow-lg hover:shadow-emerald-400/25 transition-all duration-300 px-2 py-1.5 text-[10px]"
-                >
-                  Contact Us
-                </BubbleButton>
+                <Link href="/contact">
+                  <BubbleButton
+                    className="bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 border-emerald-400/30 hover:from-emerald-400/30 hover:to-cyan-400/30 hover:shadow-lg hover:shadow-emerald-400/25 transition-all duration-300 px-2 py-1.5 text-[10px]"
+                  >
+                    Contact Us
+                  </BubbleButton>
+                </Link>
               </div>
             </div>
 
@@ -295,15 +295,13 @@ export function Navigation() {
                 )}
                 
                 <div className="pt-4">
-                  <BubbleButton
-                    onClick={() => {
-                      scrollToContact()
-                      setIsMenuOpen(false)
-                    }}
-                    className="w-full bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 border-emerald-400/30 hover:from-emerald-400/30 hover:to-cyan-400/30"
-                  >
-                    Contact Us
-                  </BubbleButton>
+                  <Link href="/contact" onClick={() => setIsMenuOpen(false)}>
+                    <BubbleButton
+                      className="w-full bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 border-emerald-400/30 hover:from-emerald-400/30 hover:to-cyan-400/30"
+                    >
+                      Contact Us
+                    </BubbleButton>
+                  </Link>
                 </div>
               </div>
             </div>

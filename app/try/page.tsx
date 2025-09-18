@@ -149,7 +149,7 @@ export default function TryPage() {
 			</div>
 
 			{/* System status indicators */}
-			<div className="absolute top-20 left-4 z-20">
+			<div className="absolute top-32 left-4 z-20">
 				<div className="space-y-2">
 					{[
 						{ name: "AI Processing", status: "Active", color: "green" },
@@ -169,7 +169,7 @@ export default function TryPage() {
 			</div>
 
 			{/* Environmental readings */}
-			<div className="absolute top-20 right-4 z-20">
+			<div className="absolute top-36 right-5 z-5">
 				<div className="bg-slate-900/30 backdrop-blur-sm border border-teal-400/20 rounded-lg p-3">
 					<div className="text-xs text-teal-300 font-medium mb-2">Environmental Data</div>
 					<div className="space-y-1 text-xs">
@@ -283,27 +283,27 @@ export default function TryPage() {
 			</div>
 
 			{/* Main content */}
-			<div className="relative z-30 flex min-h-screen items-center justify-center px-6">
+			<div className="relative z-15 flex min-h-screen items-center justify-center px-15">
 				<div className="text-center max-w-5xl mx-auto">
-					<div className="mb-12 flex items-center justify-center">
-						<div className="relative flex items-center space-x-4">
-							<div className="relative">
-								<div className="absolute inset-0 w-16 h-16 rounded-full bg-gradient-to-r from-cyan-400 to-blue-500 blur-lg opacity-60 animate-pulse"></div>
-								<div className="relative w-16 h-16 rounded-full bg-gradient-to-r from-cyan-400 to-blue-500 flex items-center justify-center shadow-2xl">
-									<div
-										className="w-8 h-8 rounded-full bg-gradient-to-r from-white/30 to-white/10 backdrop-blur-sm animate-spin"
-										style={{ animationDuration: "8s" }}
-									></div>
+						<div className="mb-15 flex items-center justify-center">
+							<div className="relative flex items-center space-x-5">
+								<div className="relative">
+									<div className="absolute inset-0 w-16 h-16 rounded-full bg-gradient-to-r from-cyan-400 to-blue-500 blur-lg opacity-60 animate-pulse"></div>
+									<div className="relative w-16 h-16 rounded-full bg-gradient-to-r from-cyan-400 to-blue-500 flex items-center justify-center shadow-2xl">
+										<div
+											className="w-8 h-8 rounded-full bg-gradient-to-r from-white/30 to-white/10 backdrop-blur-sm animate-spin"
+											style={{ animationDuration: "8s" }}
+										></div>
+									</div>
+								</div>
+								<div className="text-left">
+									<h3 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-blue-300 animate-pulse">
+										AI-Driven
+									</h3>
+									<p className="text-lg text-cyan-200/90 font-medium">Biodiversity</p>
 								</div>
 							</div>
-							<div className="text-left">
-								<h3 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-blue-300 animate-pulse">
-									AI-Driven
-								</h3>
-								<p className="text-lg text-cyan-200/90 font-medium">Biodiversity</p>
-							</div>
 						</div>
-					</div>
 
 					<div className="mb-8 relative z-20">
 						<h1 className="text-6xl md:text-7xl lg:text-8xl font-black text-cyan-200 mb-2 leading-none tracking-tight drop-shadow-lg">

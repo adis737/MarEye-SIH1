@@ -261,20 +261,37 @@ export default function RegisterPage() {
 									</div>
 								)}
 								
-								<div className="flex items-center gap-4">
-									<div className="w-16 h-16 rounded-full overflow-hidden border border-white/20 bg-white/10 flex items-center justify-center">
-										{avatarPreview ? (
-											<img src={avatarPreview} alt="Avatar preview" className="w-full h-full object-cover" />
-										) : (
-											<Upload className="w-6 h-6 text-white/70" />
-										)}
-									</div>
-									<div>
-										<label htmlFor="avatar" className="text-sm font-medium">
-											Upload avatar
-										</label>
-										<input id="avatar" name="avatar" type="file" accept="image/*" onChange={onAvatarChange} className="mt-1 block text-sm" />
-										<p className="text-xs text-white/60 mt-1">JPG/PNG, up to ~2MB recommended.</p>
+								<div className="space-y-4">
+									<label className="text-sm font-medium block">Upload avatar</label>
+									<div className="flex items-center gap-4">
+										<div 
+											className="w-20 h-20 rounded-full overflow-hidden border-2 border-white/20 bg-white/10 flex items-center justify-center cursor-pointer hover:border-cyan-400/50 transition-colors"
+											onClick={() => document.getElementById('avatar')?.click()}
+										>
+											{avatarPreview ? (
+												<img src={avatarPreview} alt="Avatar preview" className="w-full h-full object-cover" />
+											) : (
+												<Upload className="w-8 h-8 text-white/70" />
+											)}
+										</div>
+										<div className="flex-1">
+											<label 
+												htmlFor="avatar" 
+												className="inline-flex items-center px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 hover:border-cyan-400/50 rounded-lg cursor-pointer transition-colors text-sm font-medium"
+											>
+												<Upload className="w-4 h-4 mr-2" />
+												Choose File
+											</label>
+											<input 
+												id="avatar" 
+												name="avatar" 
+												type="file" 
+												accept="image/*" 
+												onChange={onAvatarChange} 
+												className="hidden"
+											/>
+											<p className="text-xs text-white/60 mt-2">JPG/PNG, up to ~2MB recommended.</p>
+										</div>
 									</div>
 								</div>
 

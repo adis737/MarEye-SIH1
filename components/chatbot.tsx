@@ -27,6 +27,41 @@ export function Chatbot() {
   const [isLoading, setIsLoading] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
+  // Function to format text with proper bullet points and formatting
+  const formatMessageContent = (content: string) => {
+    return content
+      .split('\n')
+      .map((line, index) => {
+        // Convert lines starting with * to bullet points
+        if (line.trim().startsWith('*')) {
+          const bulletText = line.trim().substring(1).trim().replace(/\*\*/g, '')
+          return (
+            <div key={index} className="flex items-start gap-2 mb-1">
+              <span className="text-cyan-400 mt-1">•</span>
+              <span>{bulletText}</span>
+            </div>
+          )
+        }
+        // Convert lines starting with - to bullet points
+        if (line.trim().startsWith('-')) {
+          const bulletText = line.trim().substring(1).trim().replace(/\*\*/g, '')
+          return (
+            <div key={index} className="flex items-start gap-2 mb-1">
+              <span className="text-cyan-400 mt-1">•</span>
+              <span>{bulletText}</span>
+            </div>
+          )
+        }
+        // Regular lines - also remove ** formatting
+        if (line.trim()) {
+          const cleanLine = line.replace(/\*\*/g, '')
+          return <div key={index} className="mb-2">{cleanLine}</div>
+        }
+        // Empty lines
+        return <div key={index} className="mb-1"></div>
+      })
+  }
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }
@@ -154,7 +189,7 @@ export function Chatbot() {
                           : "bg-slate-800 text-slate-200"
                       }`}
                     >
-                      {message.content}
+                      {message.sender === "bot" ? formatMessageContent(message.content) : message.content}
                     </div>
                     {message.sender === "user" && (
                       <div className="w-6 h-6 rounded-full bg-slate-600 flex items-center justify-center flex-shrink-0">

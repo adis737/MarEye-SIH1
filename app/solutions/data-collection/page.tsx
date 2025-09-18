@@ -4,8 +4,8 @@ import { HomeButton } from "@/components/home-button"
 import { BubbleCursor } from "@/components/bubble-cursor"
 import { GlassmorphismCard } from "@/components/glassmorphism-card"
 import { BubbleButton } from "@/components/bubble-button"
-import { Bookmark, Upload, FileText, Mail, Shield, Send, User, MessageSquare, Phone, MapPin } from "lucide-react"
-import { useState, useEffect } from "react"
+import { Bookmark, Upload, FileText, Mail, Shield, Send, User, MessageSquare, Phone, MapPin, Search, Microscope, BarChart3, Camera, Zap, Brain, Waves, Leaf } from "lucide-react"
+import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -21,31 +21,84 @@ type WatchItem = {
   createdAt?: string
 }
 
+type AITool = {
+  id: string
+  name: string
+  description: string
+  icon: React.ComponentType<{ className?: string }>
+  route: string
+  category: "analysis" | "recognition" | "monitoring" | "research"
+}
+
 export default function WatchlistPage() {
   const [watchlist, setWatchlist] = useState<WatchItem[]>([])
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
-  const [contactSubmitting, setContactSubmitting] = useState(false)
+  const [selectedTools, setSelectedTools] = useState<AITool[]>([])
   const { toast } = useToast()
+
+  // AI Tools available for research
+  const aiTools: AITool[] = [
+    {
+      id: "species-recognition",
+      name: "Species Recognition",
+      description: "Identify marine species from images using advanced AI",
+      icon: Search,
+      route: "/species-recognition",
+      category: "recognition"
+    },
+    {
+      id: "gene-analysis",
+      name: "Gene Sequence Analysis",
+      description: "Analyze DNA sequences for species identification",
+      icon: Microscope,
+      route: "/solutions/gene-analysis",
+      category: "analysis"
+    },
+    {
+      id: "water-quality",
+      name: "Water Quality Monitoring",
+      description: "Monitor and analyze water quality parameters",
+      icon: Waves,
+      route: "/water-quality",
+      category: "monitoring"
+    },
+    {
+      id: "ai-processing",
+      name: "AI Processing Tools",
+      description: "Advanced AI tools for data processing and analysis",
+      icon: Brain,
+      route: "/solutions/ai-processing",
+      category: "analysis"
+    },
+    {
+      id: "population-trends",
+      name: "Population Trends",
+      description: "Track and analyze species population trends",
+      icon: BarChart3,
+      route: "/solutions/population-trends",
+      category: "research"
+    },
+    {
+      id: "conservation-insights",
+      name: "Conservation Insights",
+      description: "Get insights for marine conservation strategies",
+      icon: Leaf,
+      route: "/solutions/conservation-insights",
+      category: "research"
+    }
+  ]
 
   // Data submission form state
   const [credentials, setCredentials] = useState({
     name: "",
     email: "",
-    institution: "",
-    verificationCode: ""
+    institution: ""
   })
   const [description, setDescription] = useState("")
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
-  // Contact form state
-  const [contactForm, setContactForm] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    institution: "",
-    message: ""
-  })
 
   useEffect(() => {
     fetchWatchlist()
@@ -68,8 +121,21 @@ export default function WatchlistPage() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
+      // Validate file size (max 10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        toast({
+          title: "Error",
+          description: "File size must be less than 10MB",
+          variant: "destructive"
+        })
+        return
+      }
       setSelectedFile(file)
     }
+  }
+
+  const handleFileClick = () => {
+    fileInputRef.current?.click()
   }
 
   const handleDataSubmission = async (e: React.FormEvent) => {
@@ -81,7 +147,6 @@ export default function WatchlistPage() {
       formData.append('name', credentials.name)
       formData.append('email', credentials.email)
       formData.append('institution', credentials.institution)
-      formData.append('verificationCode', credentials.verificationCode)
       formData.append('description', description)
       if (selectedFile) {
         formData.append('file', selectedFile)
@@ -98,7 +163,7 @@ export default function WatchlistPage() {
           description: "Your data submission has been sent to the admin team for review.",
         })
         // Reset form
-        setCredentials({ name: "", email: "", institution: "", verificationCode: "" })
+        setCredentials({ name: "", email: "", institution: "" })
         setDescription("")
         setSelectedFile(null)
       } else {
@@ -115,39 +180,88 @@ export default function WatchlistPage() {
     }
   }
 
-  const handleContactSubmission = async (e: React.FormEvent) => {
+  const handleToolSelect = (tool: AITool) => {
+    setSelectedTools(prev => {
+      const isSelected = prev.some(t => t.id === tool.id)
+      if (isSelected) {
+        return prev.filter(t => t.id !== tool.id)
+      } else {
+        return [...prev, tool]
+      }
+    })
+  }
+
+  const handleDataSubmissionWithTool = async (e: React.FormEvent) => {
     e.preventDefault()
-    setContactSubmitting(true)
+    if (selectedTools.length === 0) {
+      toast({
+        title: "Error",
+        description: "Please select at least one AI tool for your data analysis.",
+        variant: "destructive"
+      })
+      return
+    }
+
+    setSubmitting(true)
 
     try {
-      const response = await fetch('/api/admin-message', {
+      // Convert file to base64 for email attachment
+      let fileBase64 = null
+      if (selectedFile) {
+        fileBase64 = await new Promise((resolve, reject) => {
+          const reader = new FileReader()
+          reader.onload = () => resolve(reader.result)
+          reader.onerror = reject
+          reader.readAsDataURL(selectedFile)
+        })
+      }
+
+      const response = await fetch('/api/send-email', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          type: 'contact',
-          ...contactForm
+          name: credentials.name,
+          email: credentials.email,
+          institution: credentials.institution,
+          description: description,
+          selectedTools: selectedTools.map(tool => ({
+            id: tool.id,
+            name: tool.name,
+            description: tool.description
+          })),
+          fileName: selectedFile?.name || null,
+          fileSize: selectedFile?.size || null,
+          fileType: selectedFile?.type || null,
+          fileBase64: fileBase64
         })
       })
 
       if (response.ok) {
         toast({
           title: "Success",
-          description: "Your message has been sent to the admin team.",
+          description: `Your data submission has been sent for analysis using ${selectedTools.length} AI tool(s).`,
         })
-        setContactForm({ firstName: "", lastName: "", email: "", institution: "", message: "" })
+        // Reset form
+        setCredentials({ name: "", email: "", institution: "" })
+        setDescription("")
+        setSelectedFile(null)
+        setSelectedTools([])
+        if (fileInputRef.current) {
+          fileInputRef.current.value = ""
+        }
       } else {
-        throw new Error('Failed to send message')
+        throw new Error('Failed to submit')
       }
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to send your message. Please try again.",
+        description: "Failed to submit your data. Please try again.",
         variant: "destructive"
       })
     } finally {
-      setContactSubmitting(false)
+      setSubmitting(false)
     }
   }
 
@@ -176,35 +290,86 @@ export default function WatchlistPage() {
             </p>
           </div>
 
-          {/* Watchlist Section */}
+          {/* AI Tools Section */}
           <GlassmorphismCard className="p-8 mb-12">
             <h2 className="text-3xl font-bold text-white mb-8 text-center flex items-center justify-center gap-3">
-              <Bookmark className="h-8 w-8 text-cyan-400" />
-              Your Research Watchlist
+              <Zap className="h-8 w-8 text-cyan-400" />
+              Available AI Tools
             </h2>
-            <div className="grid md:grid-cols-2 gap-6">
-              <div className="space-y-3">
-                {loading ? (
-                  <div className="text-cyan-100/80 text-sm">Loading your watchlist...</div>
-                ) : watchlist.length === 0 ? (
-                  <div className="text-cyan-100/80 text-sm">No items in your watchlist yet. Start by exploring our AI tools!</div>
-                ) : (
-                  watchlist.map((item) => (
-                    <div key={item._id} className="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-white/10">
-                      <div>
-                        <div className="text-white text-sm font-medium">
-                          {item.title || (item.itemType === "gene_sequence" ? "eDNA Analysis" : "Image Recognition")}
+            <p className="text-cyan-100 text-center mb-8 max-w-2xl mx-auto">
+              Select the AI tool you want to use for analyzing your data. Each tool is specialized for different types of marine research.
+            </p>
+            
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {aiTools.map((tool) => {
+                const IconComponent = tool.icon
+                const isSelected = selectedTools.some(t => t.id === tool.id)
+                return (
+                  <div
+                    key={tool.id}
+                    onClick={() => handleToolSelect(tool)}
+                    className={`p-6 rounded-xl border-2 cursor-pointer transition-all duration-300 hover:scale-105 ${
+                      isSelected
+                        ? "border-cyan-400 bg-cyan-500/10 shadow-lg shadow-cyan-400/20"
+                        : "border-white/20 bg-white/5 hover:border-cyan-400/50 hover:bg-white/10"
+                    }`}
+                  >
+                    <div className="flex items-center gap-4 mb-4">
+                      <div className={`p-3 rounded-lg ${
+                        isSelected ? "bg-cyan-500/20" : "bg-white/10"
+                      }`}>
+                        <IconComponent className={`h-6 w-6 ${
+                          isSelected ? "text-cyan-400" : "text-white"
+                        }`} />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className={`text-lg font-semibold ${
+                          isSelected ? "text-cyan-300" : "text-white"
+                        }`}>
+                          {tool.name}
+                        </h3>
+                        <span className={`text-xs px-2 py-1 rounded-full ${
+                          tool.category === "recognition" ? "bg-blue-500/20 text-blue-300" :
+                          tool.category === "analysis" ? "bg-green-500/20 text-green-300" :
+                          tool.category === "monitoring" ? "bg-purple-500/20 text-purple-300" :
+                          "bg-orange-500/20 text-orange-300"
+                        }`}>
+                          {tool.category}
+                        </span>
+                      </div>
+                      {isSelected && (
+                        <div className="w-6 h-6 bg-cyan-400 rounded-full flex items-center justify-center">
+                          <span className="text-white text-sm font-bold">✓</span>
                         </div>
-                        {item.summary && <div className="text-cyan-200 text-xs">{item.summary}</div>}
-                      </div>
-                      <div className="text-cyan-200 text-xs">
-                        {typeof item.score === "number" ? `${Math.round(item.score * 100) / 100}%` : ""}
-                      </div>
+                      )}
                     </div>
-                  ))
-                )}
-              </div>
+                    <p className="text-cyan-200 text-sm leading-relaxed">
+                      {tool.description}
+                    </p>
+                  </div>
+                )
+              })}
             </div>
+            
+            {selectedTools.length > 0 && (
+              <div className="mt-6 p-4 bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border border-cyan-400/30 rounded-xl">
+                <h4 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+                  <Zap className="h-5 w-5 text-cyan-400" />
+                  Selected AI Tools ({selectedTools.length})
+                </h4>
+                <div className="flex flex-wrap gap-2">
+                  {selectedTools.map((tool) => {
+                    const IconComponent = tool.icon
+                    return (
+                      <div key={tool.id} className="flex items-center gap-2 bg-cyan-500/20 px-3 py-2 rounded-lg">
+                        <IconComponent className="h-4 w-4 text-cyan-400" />
+                        <span className="text-cyan-300 text-sm font-medium">{tool.name}</span>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
           </GlassmorphismCard>
 
           {/* Data Submission Section */}
@@ -217,7 +382,7 @@ export default function WatchlistPage() {
               Contribute to our marine biodiversity database by submitting your research data, images, or documents for review by our expert team.
             </p>
 
-            <form onSubmit={handleDataSubmission} className="max-w-4xl mx-auto space-y-6">
+            <form onSubmit={handleDataSubmissionWithTool} className="max-w-4xl mx-auto space-y-6">
               {/* Credentials Verification */}
               <div className="bg-white/5 rounded-xl p-6 border border-white/10">
                 <h3 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
@@ -246,7 +411,7 @@ export default function WatchlistPage() {
                       required
                     />
                   </div>
-                  <div>
+                  <div className="md:col-span-2">
                     <label className="text-sm font-medium text-cyan-100 mb-2 block">Institution/Organization *</label>
                     <Input
                       value={credentials.institution}
@@ -255,17 +420,6 @@ export default function WatchlistPage() {
                       className="bg-white/10 border-white/20 text-white placeholder:text-cyan-200"
                       required
                     />
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-cyan-100 mb-2 block">Verification Code *</label>
-                    <Input
-                      value={credentials.verificationCode}
-                      onChange={(e) => setCredentials({...credentials, verificationCode: e.target.value})}
-                      placeholder="Enter verification code"
-                      className="bg-white/10 border-white/20 text-white placeholder:text-cyan-200"
-                      required
-                    />
-                    <p className="text-xs text-cyan-200 mt-1">Contact admin for verification code</p>
                   </div>
                 </div>
               </div>
@@ -285,174 +439,39 @@ export default function WatchlistPage() {
               {/* File Upload */}
               <div>
                 <label className="text-sm font-medium text-cyan-100 mb-2 block">Attach Supporting Files (Optional)</label>
-                <div className="border-2 border-dashed border-white/20 rounded-lg p-6 text-center hover:border-cyan-400/50 transition-colors">
-                  <Upload className="h-8 w-8 text-cyan-400 mx-auto mb-2" />
+                <div 
+                  className="border-2 border-dashed border-white/20 rounded-lg p-6 text-center hover:border-cyan-400/50 transition-colors cursor-pointer"
+                  onClick={handleFileClick}
+                >
                   <input
+                    ref={fileInputRef}
                     type="file"
                     onChange={handleFileChange}
-                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.csv,.xlsx"
+                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.csv,.xlsx,.txt,.fasta,.fa,.seq"
                     className="hidden"
-                    id="file-upload"
                   />
-                  <label htmlFor="file-upload" className="cursor-pointer">
-                    <span className="text-cyan-100 hover:text-cyan-300">Click to upload files</span>
-                  </label>
+                  <Upload className="h-8 w-8 text-cyan-400 mx-auto mb-2" />
+                  <span className="text-cyan-100 hover:text-cyan-300">Click to upload files</span>
                   {selectedFile && (
-                    <p className="text-cyan-200 text-sm mt-2">Selected: {selectedFile.name}</p>
+                    <div className="mt-3 p-3 bg-cyan-500/10 rounded-lg">
+                      <p className="text-cyan-200 text-sm font-medium">Selected: {selectedFile.name}</p>
+                      <p className="text-cyan-200/70 text-xs">Size: {(selectedFile.size / 1024 / 1024).toFixed(2)} MB</p>
+                    </div>
                   )}
-                  <p className="text-cyan-200/70 text-xs mt-1">PDF, DOC, images, or data files (max 10MB)</p>
+                  <p className="text-cyan-200/70 text-xs mt-2">PDF, DOC, images, or data files (max 10MB)</p>
                 </div>
               </div>
 
               <Button
                 type="submit"
-                disabled={submitting}
-                className="w-full bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 border-emerald-400/30 hover:from-emerald-400/30 hover:to-cyan-400/30 text-white"
+                disabled={submitting || selectedTools.length === 0}
+                className="w-full bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 border-emerald-400/30 hover:from-emerald-400/30 hover:to-cyan-400/30 text-white disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {submitting ? "Submitting..." : "Send Message to Admin"}
+                {submitting ? "Submitting..." : selectedTools.length > 0 ? `Submit Data for ${selectedTools.length} AI Tool${selectedTools.length > 1 ? 's' : ''} Analysis` : "Please Select at Least One AI Tool"}
               </Button>
             </form>
           </GlassmorphismCard>
 
-          {/* Contact Admin Section */}
-          <GlassmorphismCard className="p-8">
-            <h2 className="text-3xl font-bold text-white mb-8 text-center flex items-center justify-center gap-3">
-              <MessageSquare className="h-8 w-8 text-blue-400" />
-              Contact Admin Team
-            </h2>
-            <p className="text-cyan-100 text-center mb-8 max-w-2xl mx-auto">
-              Have questions or need assistance? Get in touch with our research team for support and collaboration opportunities.
-            </p>
-
-            <div className="grid lg:grid-cols-2 gap-12">
-              {/* Contact Form */}
-              <Card className="bg-white/5 border-white/10">
-                <CardHeader>
-                  <CardTitle className="text-white">Send a Message</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <form onSubmit={handleContactSubmission} className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="text-sm font-medium text-cyan-100 mb-2 block">First Name</label>
-                        <Input
-                          value={contactForm.firstName}
-                          onChange={(e) => setContactForm({...contactForm, firstName: e.target.value})}
-                          placeholder="John"
-                          className="bg-white/10 border-white/20 text-white placeholder:text-cyan-200"
-                          required
-                        />
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium text-cyan-100 mb-2 block">Last Name</label>
-                        <Input
-                          value={contactForm.lastName}
-                          onChange={(e) => setContactForm({...contactForm, lastName: e.target.value})}
-                          placeholder="Doe"
-                          className="bg-white/10 border-white/20 text-white placeholder:text-cyan-200"
-                          required
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="text-sm font-medium text-cyan-100 mb-2 block">Email</label>
-                      <Input
-                        type="email"
-                        value={contactForm.email}
-                        onChange={(e) => setContactForm({...contactForm, email: e.target.value})}
-                        placeholder="john.doe@university.edu"
-                        className="bg-white/10 border-white/20 text-white placeholder:text-cyan-200"
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <label className="text-sm font-medium text-cyan-100 mb-2 block">Institution/Organization</label>
-                      <Input
-                        value={contactForm.institution}
-                        onChange={(e) => setContactForm({...contactForm, institution: e.target.value})}
-                        placeholder="Marine Research Institute"
-                        className="bg-white/10 border-white/20 text-white placeholder:text-cyan-200"
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <label className="text-sm font-medium text-cyan-100 mb-2 block">Message</label>
-                      <Textarea
-                        value={contactForm.message}
-                        onChange={(e) => setContactForm({...contactForm, message: e.target.value})}
-                        placeholder="Tell us about your research interests or collaboration ideas..."
-                        className="bg-white/10 border-white/20 text-white placeholder:text-cyan-200 min-h-[120px]"
-                        required
-                      />
-                    </div>
-
-                    <Button
-                      type="submit"
-                      disabled={contactSubmitting}
-                      className="w-full bg-gradient-to-r from-blue-500/20 to-cyan-500/20 border-blue-400/30 hover:from-blue-400/30 hover:to-cyan-400/30 text-white"
-                    >
-                      {contactSubmitting ? "Sending..." : "Send Message"}
-                    </Button>
-                  </form>
-                </CardContent>
-              </Card>
-
-              {/* Contact Information */}
-              <div className="space-y-6">
-                <Card className="bg-white/5 border-white/10">
-                  <CardHeader>
-                    <CardTitle className="text-white">Research Center</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex items-start gap-3">
-                      <MapPin className="h-5 w-5 text-cyan-400 mt-0.5" />
-                      <div>
-                        <div className="font-medium text-white">
-                          Centre for Marine Living Resources and Ecology
-                        </div>
-                        <div className="text-sm text-cyan-200">
-                          Ministry of Earth Sciences
-                          <br />
-                          Kochi, Kerala, India
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-3">
-                      <Mail className="h-5 w-5 text-cyan-400" />
-                      <div>
-                        <div className="font-medium text-white">heise3nberg@gmail.com</div>
-                        <div className="text-sm text-cyan-200">Admin inquiries</div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-3">
-                      <Phone className="h-5 w-5 text-cyan-400" />
-                      <div>
-                        <div className="font-medium text-white">+91-484-2390814</div>
-                        <div className="text-sm text-cyan-200">Research collaboration</div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border-cyan-400/20">
-                  <CardContent className="p-6">
-                    <h3 className="font-semibold text-white mb-2">Join Our Research Network</h3>
-                    <p className="text-sm text-cyan-200 mb-4">
-                      Collaborate with marine researchers worldwide and contribute to deep sea biodiversity conservation.
-                    </p>
-                    <Button className="bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border-cyan-400/30 hover:from-cyan-400/30 hover:to-blue-400/30 text-white">
-                      Apply for Access
-                    </Button>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
-          </GlassmorphismCard>
         </div>
       </div>
     </div>
