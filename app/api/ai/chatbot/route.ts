@@ -14,6 +14,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Chatbot is free to use - no token consumption required
+
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" })
 
     const systemPrompt = `You are an AI assistant for the Deep Sea Biodiversity Research Platform. This platform focuses on:

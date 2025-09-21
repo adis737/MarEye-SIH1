@@ -7,7 +7,9 @@ import { getUserCollection } from "@/dbCollections";
 
 export async function POST(req: NextRequest) {
   try {
+    console.log("PayPal create-order API called");
     const { planId } = await req.json();
+    console.log("Plan ID received:", planId);
 
     // Validate plan
     const plan = SUBSCRIPTION_PLANS[planId];
@@ -26,58 +28,63 @@ export async function POST(req: NextRequest) {
       }, { status: 400 });
     }
 
-    // Get user from token
+    // Get user from token (optional - allow payments for non-logged-in users)
     const cookieHeader = req.headers.get("cookie");
-    if (!cookieHeader) {
-      return NextResponse.json({ 
-        success: false, 
-        error: "Authentication required" 
-      }, { status: 401 });
-    }
+    console.log("Cookie header:", cookieHeader ? "Present" : "Missing");
+    
+    let userId = null;
+    let user = null;
 
-    const cookies = cookieHeader.split(';').reduce((acc: Record<string, string>, cookie) => {
-      const [key, value] = cookie.trim().split('=');
-      if (key && value) {
-        acc[key] = value;
+    if (cookieHeader) {
+      const cookies = cookieHeader.split(';').reduce((acc: Record<string, string>, cookie) => {
+        const [key, value] = cookie.trim().split('=');
+        if (key && value) {
+          acc[key] = value;
+        }
+        return acc;
+      }, {});
+
+      const token = cookies['auth_token'];
+      console.log("Auth token found:", token ? "Yes" : "No");
+      
+      if (token) {
+        try {
+          // Verify JWT token
+          const jwtSecret = process.env.JWT_SECRET || "supersecret";
+          const decoded: any = jwt.verify(token, jwtSecret);
+          
+          if (decoded && decoded.id) {
+            userId = decoded.id;
+            console.log("User ID from token:", userId);
+            
+            // Get user from database
+            const users = await getUserCollection();
+            user = await users.findOne({ _id: new ObjectId(decoded.id) });
+            console.log("User found in database:", user ? "Yes" : "No");
+          }
+        } catch (jwtError) {
+          console.log("JWT verification failed, proceeding without authentication");
+        }
       }
-      return acc;
-    }, {});
-
-    const token = cookies['auth_token'];
-    if (!token) {
-      return NextResponse.json({ 
-        success: false, 
-        error: "Authentication token not found" 
-      }, { status: 401 });
     }
-
-    // Verify JWT token
-    const jwtSecret = process.env.JWT_SECRET || "supersecret";
-    let decoded: any;
-    try {
-      decoded = jwt.verify(token, jwtSecret);
-    } catch (jwtError) {
-      return NextResponse.json({ 
-        success: false, 
-        error: "Invalid or expired token" 
-      }, { status: 401 });
-    }
-
-    // Get user from database
-    const users = await getUserCollection();
-    const user = await users.findOne({ _id: new ObjectId(decoded.id) });
     
-    if (!user) {
-      return NextResponse.json({
-        success: false, 
-        error: "User not found" 
-      }, { status: 404 });
-    }
+    console.log("Processing payment for:", userId ? "Logged-in user" : "Guest user");
 
-    // Convert INR to USD for PayPal (PayPal doesn't support INR)
+    // Convert INR to USD for PayPal (PayPal sandbox doesn't support INR)
     const usdAmount = PayPalService.convertINRToUSD(plan.price);
-    
-    // Create PayPal order
+
+    console.log(`Creating PayPal order: ${plan.price} INR -> ${usdAmount} USD for plan: ${plan.name}`);
+    console.log('PayPal sandbox account should accept USD payments');
+
+    // Additional validation for USD amount
+    if (usdAmount < 0.50) {
+      return NextResponse.json({
+        success: false,
+        error: "Amount too small for PayPal processing"
+      }, { status: 400 });
+    }
+
+    // Create PayPal order with USD
     const order = await PayPalService.createOrder(
       usdAmount,
       'USD',
@@ -91,23 +98,31 @@ export async function POST(req: NextRequest) {
       }, { status: 500 });
     }
 
-    // Store order details in database for verification
-    await users.updateOne(
-      { _id: new ObjectId(decoded.id) },
-      {
-        $push: {
-          paymentHistory: {
-            id: order.id,
-            amount: plan.price,
-            currency: 'INR',
-            status: 'pending',
-            date: new Date(),
-            plan: planId,
-            paymentMethod: 'paypal'
-          }
+    // Store order details in database for verification (only for logged-in users)
+    if (userId && user) {
+      const users = await getUserCollection();
+      await users.updateOne(
+        { _id: new ObjectId(userId) },
+        {
+          $push: {
+                   paymentHistory: {
+                     id: order.id,
+                     amount: plan.price, // Store original INR amount
+                     currency: 'INR',
+                     status: 'pending',
+                     date: new Date(),
+                     plan: planId,
+                     paymentMethod: 'paypal',
+                     paypalAmount: usdAmount, // Store PayPal USD amount
+                     paypalCurrency: 'USD'
+                   }
+          } as any
         }
-      }
-    );
+      );
+      console.log("Payment history stored for user:", userId);
+    } else {
+      console.log("Guest user - payment history not stored");
+    }
 
     return NextResponse.json({
       success: true,

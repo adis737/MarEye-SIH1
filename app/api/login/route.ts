@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getUserCollection } from "@/dbCollections"
-import bcrypt from "bcryptjs"
-import jwt from "jsonwebtoken"
+import * as bcrypt from "bcryptjs"
+import * as jwt from "jsonwebtoken"
 
 const JWT_SECRET = process.env.JWT_SECRET || "supersecret"
 

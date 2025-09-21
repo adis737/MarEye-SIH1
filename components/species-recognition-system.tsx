@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Upload, Camera, Loader2, CheckCircle, AlertCircle, Eye, Microscope, FileImage, Zap } from "lucide-react"
 import Image from "next/image"
 import type { SpeciesIdentificationResult } from "@/lib/gemini-client"
+import { useTokenRefresh } from "@/hooks/use-token-refresh"
 
 interface AnalysisResult extends SpeciesIdentificationResult {
   analysisId: string
@@ -25,6 +26,7 @@ export function SpeciesRecognitionSystem() {
   const [additionalContext, setAdditionalContext] = useState("")
   const [analysisProgress, setAnalysisProgress] = useState(0)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const { refreshTokenStatus } = useTokenRefresh()
 
   const handleImageUpload = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -125,6 +127,8 @@ export function SpeciesRecognitionSystem() {
           processingTime: Date.now(),
         })
         console.log("[v0] Species identification completed:", data.result.species)
+        // Refresh token status after successful AI analysis
+        refreshTokenStatus()
       } else {
         throw new Error(data.error || "Analysis failed")
       }

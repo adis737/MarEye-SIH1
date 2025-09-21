@@ -20,6 +20,7 @@ import {
   Eye,
   Search,
 } from "lucide-react"
+import { useTokenRefresh } from "@/hooks/use-token-refresh"
 
 interface WaterQualityPoint {
   id: string
@@ -65,6 +66,7 @@ export function InteractiveWaterQualityMap() {
     timeframe: "all",
   })
   const [searchQuery, setSearchQuery] = useState("")
+  const { refreshTokenStatus } = useTokenRefresh()
 
   // Sample data - in production this would come from your API
   const sampleData: WaterQualityPoint[] = [
@@ -247,6 +249,8 @@ export function InteractiveWaterQualityMap() {
       if (response.ok) {
         const result = await response.json()
         console.log("[v0] Water quality analysis completed:", result)
+        // Refresh token status after successful AI analysis
+        refreshTokenStatus()
         // You could update the UI with AI insights here
       }
     } catch (error) {

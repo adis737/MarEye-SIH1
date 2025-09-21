@@ -3,8 +3,8 @@ import crypto from 'crypto';
 
 // Initialize Razorpay
 const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID || '',
-  key_secret: process.env.RAZORPAY_KEY_SECRET || ''
+  key_id: process.env.RAZORPAY_KEY_ID || 'rzp_test_placeholder',
+  key_secret: process.env.RAZORPAY_KEY_SECRET || 'placeholder_secret'
 });
 
 export interface PaymentOrder {
@@ -28,6 +28,20 @@ export class PaymentService {
    */
   static async createOrder(amount: number, currency: string = 'INR', receipt: string): Promise<PaymentOrder | null> {
     try {
+      // Check if Razorpay credentials are properly configured
+      if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET || 
+          process.env.RAZORPAY_KEY_ID === 'rzp_test_placeholder' || 
+          process.env.RAZORPAY_KEY_SECRET === 'placeholder_secret') {
+        console.warn('Razorpay credentials not configured. Using mock order for development.');
+        return {
+          id: 'mock_order_' + Date.now(),
+          amount: amount,
+          currency: currency,
+          receipt: receipt,
+          status: 'created'
+        };
+      }
+
       const options = {
         amount: amount * 100, // Razorpay expects amount in paise
         currency,

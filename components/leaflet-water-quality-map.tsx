@@ -55,7 +55,7 @@ const WorldHeatmapMap = ({ waterQualityData, selectedMetric }: any) => {
         }
 
         // Check if map is already initialized
-        if (container._leaflet_id) {
+        if ((container as any)._leaflet_id) {
           return
         }
 

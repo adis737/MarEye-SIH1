@@ -2,6 +2,8 @@ import { type NextRequest, NextResponse } from "next/server"
 import { GeminiAIService } from "@/lib/gemini-services"
 import { VISION_MODEL_ID } from "@/lib/gemini-client"
 import { getDatabase } from "@/lib/mongodb"
+import { TokenService } from "@/lib/token-service"
+import * as jwt from "jsonwebtoken"
 
 
 export async function POST(request: NextRequest) {
@@ -53,6 +55,8 @@ export async function POST(request: NextRequest) {
         } catch (jwtError) {
           // Continue without token check for invalid tokens
           console.log("JWT verification failed, proceeding without token check");
+          console.log("JWT Error details:", jwtError);
+          console.log("Token being verified:", token);
         }
       }
     }

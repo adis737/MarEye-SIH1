@@ -19,16 +19,32 @@ export function SubscriptionPlans({ currentPlan = 'basic', onPlanSelect }: Subsc
   const [loading, setLoading] = useState<string | null>(null);
   const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan | null>(null);
+  const [showDowngradeConfirm, setShowDowngradeConfirm] = useState(false);
+  const [planToDowngrade, setPlanToDowngrade] = useState<SubscriptionPlan | null>(null);
 
   const handlePlanSelect = async (plan: SubscriptionPlan) => {
+    console.log("handlePlanSelect called with:", plan.id, "currentPlan:", currentPlan);
+    
     if (plan.id === currentPlan) {
       toast.info("You are already on this plan");
       return;
     }
 
     if (plan.price === 0) {
-      toast.info("This is a free plan");
-      return;
+      console.log("Basic plan selected, current plan:", currentPlan);
+      // Show confirmation dialog for basic plan (downgrade or info)
+      if (currentPlan !== 'basic') {
+        console.log("Showing downgrade confirmation dialog");
+        setPlanToDowngrade(plan);
+        setShowDowngradeConfirm(true);
+        return;
+      } else {
+        // If already on basic, show info dialog instead of just a toast
+        console.log("Showing basic plan info dialog");
+        setPlanToDowngrade(plan);
+        setShowDowngradeConfirm(true);
+        return;
+      }
     }
 
     // Show payment form for all paid plans (including enterprise)
@@ -41,11 +57,61 @@ export function SubscriptionPlans({ currentPlan = 'basic', onPlanSelect }: Subsc
     setSelectedPlan(null);
     toast.success("Payment successful! Your subscription has been upgraded.");
     onPlanSelect?.(selectedPlan?.id || '');
+    
+    // Don't trigger automatic refresh - let the success page handle it
+    // The success page will redirect or handle the flow appropriately
   };
 
   const handlePaymentCancel = () => {
     setShowPaymentForm(false);
     setSelectedPlan(null);
+  };
+
+  const handleDowngradeConfirm = async () => {
+    console.log("handleDowngradeConfirm called, planToDowngrade:", planToDowngrade);
+    if (!planToDowngrade) return;
+    
+    setLoading(planToDowngrade.id);
+    try {
+      console.log("Making API call to downgrade to:", planToDowngrade.id);
+      const response = await fetch('/api/subscription/downgrade', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ planId: planToDowngrade.id })
+      });
+
+      console.log("API response status:", response.status);
+      const data = await response.json();
+      console.log("API response data:", data);
+      
+      if (data.success) {
+        toast.success("Successfully switched to Basic plan!");
+        console.log("Calling onPlanSelect with:", planToDowngrade.id);
+        onPlanSelect?.(planToDowngrade.id);
+        setShowDowngradeConfirm(false);
+        setPlanToDowngrade(null);
+        
+        // Trigger a custom event to refresh token status (only for plan switches)
+        setTimeout(() => {
+          window.dispatchEvent(new CustomEvent('tokenStatusRefresh'));
+        }, 500);
+      } else {
+        toast.error(data.error || "Failed to switch to Basic plan");
+      }
+    } catch (error) {
+      console.error("Error switching to basic plan:", error);
+      toast.error("Failed to switch to Basic plan");
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  const handleDowngradeCancel = () => {
+    setShowDowngradeConfirm(false);
+    setPlanToDowngrade(null);
   };
 
   const getPlanIcon = (planId: string) => {
@@ -143,7 +209,7 @@ export function SubscriptionPlans({ currentPlan = 'basic', onPlanSelect }: Subsc
               ) : currentPlan === plan.id ? (
                 "Current Plan"
               ) : plan.price === 0 ? (
-                "Get Started"
+                currentPlan !== 'basic' ? "Switch to Basic" : "Get Started"
               ) : (
                 <div className="flex items-center space-x-2">
                   <CreditCard className="w-4 h-4" />
@@ -176,6 +242,77 @@ export function SubscriptionPlans({ currentPlan = 'basic', onPlanSelect }: Subsc
               onCancel={handlePaymentCancel}
             />
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Basic Plan Dialog */}
+      <Dialog open={showDowngradeConfirm} onOpenChange={setShowDowngradeConfirm}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center space-x-2">
+              <Zap className="w-6 h-6 text-blue-500" />
+              <span>{currentPlan !== 'basic' ? 'Switch to Basic Plan' : 'Basic Plan'}</span>
+            </DialogTitle>
+            <DialogDescription>
+              {currentPlan !== 'basic' 
+                ? 'Are you sure you want to switch to the Basic plan?'
+                : 'You are currently on the Basic plan. Here\'s what you get:'
+              }
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            {currentPlan !== 'basic' && (
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <h4 className="font-semibold text-yellow-800 mb-2">⚠️ What happens when you switch:</h4>
+                <ul className="text-sm text-yellow-700 space-y-1">
+                  <li>• Your current subscription will be cancelled</li>
+                  <li>• You'll get 10 tokens per day (instead of your current limit)</li>
+                  <li>• You'll lose access to premium features</li>
+                  <li>• Your token usage will be reset</li>
+                </ul>
+              </div>
+            )}
+            
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <h4 className="font-semibold text-blue-800 mb-2">✅ Basic Plan includes:</h4>
+              <ul className="text-sm text-blue-700 space-y-1">
+                <li>• 10 daily tokens for AI analysis</li>
+                <li>• Basic species identification</li>
+                <li>• eDNA analysis</li>
+                <li>• Basic water quality monitoring</li>
+                <li>• Community support</li>
+                <li>• Free forever</li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="flex space-x-3">
+            <Button
+              variant="outline"
+              onClick={handleDowngradeCancel}
+              className="flex-1"
+              disabled={loading === 'basic'}
+            >
+              {currentPlan !== 'basic' ? 'Cancel' : 'Close'}
+            </Button>
+            {currentPlan !== 'basic' && (
+              <Button
+                onClick={handleDowngradeConfirm}
+                className="flex-1 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600"
+                disabled={loading === 'basic'}
+              >
+                {loading === 'basic' ? (
+                  <div className="flex items-center space-x-2">
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    <span>Switching...</span>
+                  </div>
+                ) : (
+                  "Switch to Basic"
+                )}
+              </Button>
+            )}
+          </div>
         </DialogContent>
       </Dialog>
     </>

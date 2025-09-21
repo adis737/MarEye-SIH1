@@ -23,9 +23,11 @@ export function Navigation() {
     { href: "/dashboard", label: "Dashboard", icon: "📊" },
     { href: "/species-recognition", label: "Species ID", icon: "🐠" },
     { href: "/water-quality", label: "Water Quality", icon: "💧" },
+    { href: "/voice-agent", label: "Voice AI", icon: "🎙️" },
     { href: "/solutions/ai-processing", label: "AI Tools", icon: "🤖" },
+    { href: "/forum", label: "Forum", icon: "💬" },
     { href: "/solutions/conservation-insights", label: "Conservation", icon: "🌊" },
-    { href: "/solutions/population-trends", label: "Trends", icon: "📈" },
+    { href: "/solutions/population-trends", label: "Abundance", icon: "📈" },
     { href: "/solutions/data-collection", label: "Data", icon: "📋" }
   ]
 
@@ -68,9 +70,11 @@ export function Navigation() {
     { href: "/", label: "Home", icon: "🏠" },
     { href: "/solutions/data-collection", label: "Watchlist", icon: "📋" },
     { href: "/solutions/ai-processing", label: "AI Processing", icon: "🤖" },
+    { href: "/voice-agent", label: "Voice AI", icon: "🎙️" },
     { href: "/species-recognition", label: "Species Recognition", icon: "🔍" },
     { href: "/water-quality", label: "Water Quality", icon: "💧" },
     { href: "/dashboard", label: "Dashboard", icon: "📊" },
+    { href: "/forum", label: "Forum", icon: "💬" },
   ]
 
   const moreNavItems = [

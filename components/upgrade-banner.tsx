@@ -29,7 +29,7 @@ export function UpgradeBanner({ tokenStatus, subscription, variant = 'banner' }:
       tokenStatus.dailyLimit !== -1 &&
       !isDismissed;
 
-    setIsVisible(shouldShow);
+    setIsVisible(!!shouldShow);
   }, [tokenStatus, subscription, isDismissed]);
 
   const handleDismiss = () => {

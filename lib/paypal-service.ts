@@ -27,8 +27,15 @@ export class PayPalService {
       const clientSecret = process.env.PAYPAL_CLIENT_SECRET;
 
       if (!clientId || !clientSecret) {
+        console.error('PayPal credentials not configured');
+        console.error('PAYPAL_CLIENT_ID:', clientId ? 'Set' : 'Missing');
+        console.error('PAYPAL_CLIENT_SECRET:', clientSecret ? 'Set' : 'Missing');
         throw new Error('PayPal credentials not configured');
       }
+
+      console.log('PayPal environment:', process.env.PAYPAL_MODE || 'sandbox');
+      console.log('PayPal base URL:', this.getBaseUrl());
+      console.log('PayPal Client ID (first 10 chars):', clientId.substring(0, 10) + '...');
 
       const response = await fetch(`${this.getBaseUrl()}/v1/oauth2/token`, {
         method: 'POST',
@@ -83,6 +90,9 @@ export class PayPalService {
         }
       };
 
+      console.log('PayPal order request:', JSON.stringify(orderRequest, null, 2));
+      console.log('PayPal order amount:', amount, 'currency:', currency);
+
       const response = await fetch(`${this.getBaseUrl()}/v2/checkout/orders`, {
         method: 'POST',
         headers: {
@@ -95,6 +105,7 @@ export class PayPalService {
 
       if (!response.ok) {
         const errorData = await response.json();
+        console.error('PayPal API error response:', JSON.stringify(errorData, null, 2));
         throw new Error(`PayPal API error: ${JSON.stringify(errorData)}`);
       }
 
@@ -224,11 +235,17 @@ export class PayPalService {
   }
 
   /**
-   * Convert INR to USD (simplified conversion)
+   * Convert INR to USD for PayPal (PayPal sandbox doesn't support INR)
    */
   static convertINRToUSD(inrAmount: number): number {
-    // This is a simplified conversion rate - in production, use real-time rates
-    const exchangeRate = 0.012; // 1 INR = 0.012 USD (approximate)
-    return Math.round(inrAmount * exchangeRate * 100) / 100;
+    // Use a realistic conversion rate: 1 INR = 0.012 USD (approximately 83 INR = 1 USD)
+    const exchangeRate = 0.012;
+    const usdAmount = Math.round(inrAmount * exchangeRate * 100) / 100;
+    
+    // Ensure minimum amount for PayPal (at least $0.50)
+    const finalAmount = Math.max(usdAmount, 0.50);
+    
+    console.log(`Converting ${inrAmount} INR to ${finalAmount} USD (rate: ${exchangeRate})`);
+    return finalAmount;
   }
 }

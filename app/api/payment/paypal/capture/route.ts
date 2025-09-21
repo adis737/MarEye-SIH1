@@ -16,65 +16,50 @@ export async function POST(req: NextRequest) {
       }, { status: 400 });
     }
 
-    // Get user from token
+    // Get user from token (optional - allow payments for non-logged-in users)
     const cookieHeader = req.headers.get("cookie");
-    if (!cookieHeader) {
-      return NextResponse.json({ 
-        success: false, 
-        error: "Authentication required" 
-      }, { status: 401 });
-    }
-
-    const cookies = cookieHeader.split(';').reduce((acc: Record<string, string>, cookie) => {
-      const [key, value] = cookie.trim().split('=');
-      if (key && value) {
-        acc[key] = value;
-      }
-      return acc;
-    }, {});
-
-    const token = cookies['auth_token'];
-    if (!token) {
-      return NextResponse.json({ 
-        success: false, 
-        error: "Authentication token not found" 
-      }, { status: 401 });
-    }
-
-    // Verify JWT token
-    const jwtSecret = process.env.JWT_SECRET || "supersecret";
-    let decoded: any;
-    try {
-      decoded = jwt.verify(token, jwtSecret);
-    } catch (jwtError) {
-      return NextResponse.json({ 
-        success: false, 
-        error: "Invalid or expired token" 
-      }, { status: 401 });
-    }
-
-    // Get user from database
-    const users = await getUserCollection();
-    const user = await users.findOne({ _id: new ObjectId(decoded.id) });
+    let userId = null;
+    let user = null;
     
-    if (!user) {
-      return NextResponse.json({
-        success: false, 
-        error: "User not found" 
-      }, { status: 404 });
+    if (cookieHeader) {
+      const cookies = cookieHeader.split(';').reduce((acc: Record<string, string>, cookie) => {
+        const [key, value] = cookie.trim().split('=');
+        if (key && value) {
+          acc[key] = value;
+        }
+        return acc;
+      }, {});
+
+      const token = cookies['auth_token'];
+      if (token) {
+        try {
+          const jwtSecret = process.env.JWT_SECRET || "supersecret";
+          const decoded: any = jwt.verify(token, jwtSecret);
+          
+          if (decoded && decoded.id) {
+            userId = decoded.id;
+            const users = await getUserCollection();
+            user = await users.findOne({ _id: new ObjectId(decoded.id) });
+          }
+        } catch (jwtError) {
+          console.log("JWT verification failed, proceeding without authentication");
+        }
+      }
     }
 
-    // Find the pending payment record
-    const pendingPayment = user.paymentHistory?.find(
-      (payment: any) => payment.id === orderId && payment.status === 'pending'
-    );
-
-    if (!pendingPayment) {
-      return NextResponse.json({
-        success: false, 
-        error: "Payment record not found or already processed" 
-      }, { status: 404 });
+    // For logged-in users, find the pending payment record
+    let pendingPayment = null;
+    if (user && user.paymentHistory) {
+      pendingPayment = user.paymentHistory.find(
+        (payment: any) => payment.id === orderId && payment.status === 'pending'
+      );
+      console.log("Found pending payment:", pendingPayment ? "Yes" : "No");
     }
+
+    // For guest users, we'll still capture the payment but won't update user subscription
+    console.log("Processing capture for:", userId ? "Logged-in user" : "Guest user");
+    console.log("User ID:", userId);
+    console.log("Pending payment found:", pendingPayment ? "Yes" : "No");
 
     // Capture the PayPal order
     const payment = await PayPalService.captureOrder(orderId);
@@ -86,24 +71,32 @@ export async function POST(req: NextRequest) {
       }, { status: 400 });
     }
 
-    // Upgrade user subscription
-    const upgradeSuccess = await TokenService.upgradeSubscription(
-      decoded.id,
-      pendingPayment.plan,
-      payment.id
-    );
+    // Upgrade user subscription (only for logged-in users)
+    let upgradeSuccess = true;
+    if (userId && pendingPayment) {
+      upgradeSuccess = await TokenService.upgradeSubscription(
+        userId,
+        pendingPayment.plan,
+        payment.id
+      );
 
-    if (!upgradeSuccess) {
-      return NextResponse.json({ 
-        success: false, 
-        error: "Failed to upgrade subscription" 
-      }, { status: 500 });
+      if (!upgradeSuccess) {
+        return NextResponse.json({ 
+          success: false, 
+          error: "Failed to upgrade subscription" 
+        }, { status: 500 });
+      }
+      console.log("Subscription upgraded for user:", userId);
+    } else {
+      console.log("Guest user - subscription not upgraded");
     }
 
-    // Update payment status
-    await users.updateOne(
-      { 
-        _id: new ObjectId(decoded.id),
+    // Update payment status (only for logged-in users)
+    if (userId && user) {
+      const users = await getUserCollection();
+      await users.updateOne(
+        { 
+          _id: new ObjectId(userId),
         'paymentHistory.id': orderId
       },
       {
@@ -114,13 +107,15 @@ export async function POST(req: NextRequest) {
         }
       }
     );
+    }
 
     return NextResponse.json({ 
       success: true, 
-      message: "Payment captured and subscription upgraded successfully",
+      message: userId && pendingPayment ? "Payment captured and subscription upgraded successfully" : "Payment captured successfully",
       paymentId: payment.id,
       orderId: orderId,
-      planId: pendingPayment.plan
+      planId: pendingPayment?.plan || 'unknown',
+      subscriptionUpgraded: userId && pendingPayment ? true : false
     });
 
   } catch (error: any) {

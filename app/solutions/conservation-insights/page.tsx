@@ -31,6 +31,20 @@ export default function ConservationInsightsPage() {
             </p>
           </div>
 
+          {/* CTA */}
+          <div className="text-center mb-16">
+            <a 
+              href="http://localhost:3002" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="inline-block"
+            >
+              <BubbleButton className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 border-green-400/30 hover:from-green-400/30 hover:to-emerald-400/30 px-8 py-4 text-lg">
+                Start Conservation Project →
+              </BubbleButton>
+            </a>
+          </div>
+
           {/* Impact Metrics */}
           <div className="grid md:grid-cols-3 gap-8 mb-16">
             {[
@@ -212,13 +226,6 @@ export default function ConservationInsightsPage() {
               ))}
             </div>
           </GlassmorphismCard>
-
-          {/* CTA */}
-          <div className="text-center">
-            <BubbleButton className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 border-green-400/30 hover:from-green-400/30 hover:to-emerald-400/30 px-8 py-4 text-lg">
-              Start Conservation Project →
-            </BubbleButton>
-          </div>
         </div>
       </div>
     </div>

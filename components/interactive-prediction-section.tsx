@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Upload, Search, BarChart3, Camera, Microscope, FileImage } from "lucide-react"
 import Link from "next/link"
+import { useTokenRefresh } from "@/hooks/use-token-refresh"
 
 interface SpeciesAnalysis {
   speciesName: string
@@ -30,6 +31,7 @@ export function InteractivePredictionSection() {
   const [newSpeciesCount, setNewSpeciesCount] = useState(12)
   const [recentPredictions, setRecentPredictions] = useState<SpeciesAnalysis[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const { refreshTokenStatus } = useTokenRefresh()
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -126,6 +128,9 @@ export function InteractivePredictionSection() {
         
         // Add to recent predictions
         setRecentPredictions(prev => [result.data, ...prev.slice(0, 2)]) // Keep last 3
+        
+        // Refresh token status after successful AI analysis
+        refreshTokenStatus()
       } else {
         throw new Error(result.error || 'Analysis failed')
       }

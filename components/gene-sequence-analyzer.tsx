@@ -23,6 +23,7 @@ import {
   Star
 } from "lucide-react"
 import { toast } from "sonner"
+import { useTokenRefresh } from "@/hooks/use-token-refresh"
 
 interface PredictionResult {
   sequence_id: string
@@ -51,6 +52,7 @@ export function GeneSequenceAnalyzer() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [watchlistedIndexes, setWatchlistedIndexes] = useState<Set<number>>(new Set())
   const [expandedRows, setExpandedRows] = useState<Record<number, boolean>>({})
+  const { refreshTokenStatus } = useTokenRefresh()
 
   const formatKey = (key: string) => {
     return key
@@ -203,6 +205,8 @@ export function GeneSequenceAnalyzer() {
 
       if (data.success) {
         toast.success(`Analysis complete! Processed ${data.total_sequences} sequences`)
+        // Refresh token status after successful AI analysis
+        refreshTokenStatus()
       } else {
         toast.error(data.message || "Analysis failed")
       }
@@ -494,7 +498,7 @@ export function GeneSequenceAnalyzer() {
                     {(() => {
                       // Dynamically detect taxonomy ranks from keys like `${rank}_pred_label` / `${rank}_pred_conf`
                       const entries: Array<{ rank: string; label: string; conf?: number }> = []
-                      Object.entries(prediction as Record<string, unknown>).forEach(([k, v]) => {
+                      Object.entries(prediction as unknown as Record<string, unknown>).forEach(([k, v]) => {
                         const m = k.match(/^(.*)_pred_label$/)
                         if (m && typeof v === 'string') {
                           const rank = m[1]
@@ -558,7 +562,7 @@ export function GeneSequenceAnalyzer() {
                     </div>
                     {expandedRows[index] && (
                       <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {Object.entries(prediction as Record<string, unknown>).map(([key, value]) => (
+                        {Object.entries(prediction as unknown as Record<string, unknown>).map(([key, value]) => (
                           <div key={key} className="p-3 rounded border border-white/10 bg-white/5">
                             <div className="text-xs text-white/60 mb-1">{formatKey(key)}</div>
                             <div className="text-sm text-white font-mono break-all">

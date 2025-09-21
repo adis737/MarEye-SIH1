@@ -33,7 +33,7 @@ export function FloatingUpgradeButton({ tokenStatus, subscription }: FloatingUpg
       !isDismissed &&
       !window.location.pathname.includes('/subscription');
 
-    setIsVisible(shouldShow);
+    setIsVisible(!!shouldShow);
   }, [tokenStatus, subscription, isDismissed]);
 
   const handleDismiss = () => {

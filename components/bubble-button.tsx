@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState, useRef } from "react"
+import { useState, useRef, forwardRef } from "react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
@@ -21,21 +21,21 @@ interface BubbleButtonProps {
   size?: "default" | "sm" | "lg" | "icon"
 }
 
-export function BubbleButton({
+export const BubbleButton = forwardRef<HTMLButtonElement, BubbleButtonProps>(({
   children,
   className,
   onClick,
   variant = "default",
   size = "default",
-}: BubbleButtonProps) {
+}, ref) => {
   const [bubbles, setBubbles] = useState<BubbleEffect[]>([])
   const audioRef = useRef<HTMLAudioElement | null>(null)
-  const buttonRef = useRef<HTMLButtonElement>(null)
 
   const createBubbles = (e: React.MouseEvent) => {
-    if (!buttonRef.current) return
+    const buttonElement = e.currentTarget as HTMLButtonElement
+    if (!buttonElement) return
 
-    const rect = buttonRef.current.getBoundingClientRect()
+    const rect = buttonElement.getBoundingClientRect()
     const x = e.clientX - rect.left
     const y = e.clientY - rect.top
 
@@ -67,7 +67,7 @@ export function BubbleButton({
 
   return (
     <Button
-      ref={buttonRef}
+      ref={ref}
       variant={variant}
       size={size}
       className={cn(
@@ -95,4 +95,6 @@ export function BubbleButton({
       ))}
     </Button>
   )
-}
+})
+
+BubbleButton.displayName = "BubbleButton"

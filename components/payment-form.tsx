@@ -71,40 +71,44 @@ export function PaymentForm({ plan, onSuccess, onCancel }: PaymentFormProps) {
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
-    if (!formData.cardNumber || formData.cardNumber.replace(/\s/g, '').length < 16) {
-      newErrors.cardNumber = "Please enter a valid 16-digit card number";
-    }
-
-    if (!formData.expiryMonth || !formData.expiryYear) {
-      newErrors.expiry = "Please select expiry month and year";
-    }
-
-    if (!formData.cvv || formData.cvv.length < 3) {
-      newErrors.cvv = "Please enter a valid CVV";
-    }
-
-    if (!formData.cardholderName.trim()) {
-      newErrors.cardholderName = "Please enter cardholder name";
-    }
-
-    if (!formData.email.trim() || !/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = "Please enter a valid email address";
-    }
-
-    if (!formData.address.trim()) {
-      newErrors.address = "Please enter billing address";
-    }
-
-    if (!formData.city.trim()) {
-      newErrors.city = "Please enter city";
-    }
-
-    if (!formData.zipCode.trim()) {
-      newErrors.zipCode = "Please enter ZIP code";
-    }
-
+    // Terms and conditions are required for all payment methods
     if (!formData.termsAccepted) {
       newErrors.termsAccepted = "Please accept the terms and conditions";
+    }
+
+    // Card validation only required for card payments
+    if (paymentMethod === 'card') {
+      if (!formData.cardNumber || formData.cardNumber.replace(/\s/g, '').length < 16) {
+        newErrors.cardNumber = "Please enter a valid 16-digit card number";
+      }
+
+      if (!formData.expiryMonth || !formData.expiryYear) {
+        newErrors.expiry = "Please select expiry month and year";
+      }
+
+      if (!formData.cvv || formData.cvv.length < 3) {
+        newErrors.cvv = "Please enter a valid CVV";
+      }
+
+      if (!formData.cardholderName.trim()) {
+        newErrors.cardholderName = "Please enter cardholder name";
+      }
+
+      if (!formData.email.trim() || !/\S+@\S+\.\S+/.test(formData.email)) {
+        newErrors.email = "Please enter a valid email address";
+      }
+
+      if (!formData.address.trim()) {
+        newErrors.address = "Please enter billing address";
+      }
+
+      if (!formData.city.trim()) {
+        newErrors.city = "Please enter city";
+      }
+
+      if (!formData.zipCode.trim()) {
+        newErrors.zipCode = "Please enter ZIP code";
+      }
     }
 
     setErrors(newErrors);
@@ -113,6 +117,7 @@ export function PaymentForm({ plan, onSuccess, onCancel }: PaymentFormProps) {
 
   const handlePayPalPayment = async () => {
     setIsProcessing(true);
+    console.log("Starting PayPal payment for plan:", plan.id);
 
     try {
       // Create PayPal order
@@ -127,12 +132,16 @@ export function PaymentForm({ plan, onSuccess, onCancel }: PaymentFormProps) {
         credentials: 'include'
       });
 
+      console.log("PayPal API response status:", response.status);
       const data = await response.json();
+      console.log("PayPal API response data:", data);
 
       if (data.success && data.approvalUrl) {
+        console.log("Redirecting to PayPal:", data.approvalUrl);
         // Redirect to PayPal for payment
         window.location.href = data.approvalUrl;
       } else {
+        console.error("PayPal order creation failed:", data.error);
         toast.error(data.error || "Failed to create PayPal order");
       }
     } catch (error) {
@@ -154,37 +163,42 @@ export function PaymentForm({ plan, onSuccess, onCancel }: PaymentFormProps) {
     setIsProcessing(true);
 
     try {
-      // Call mock payment API
-      const response = await fetch('/api/payment/process', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          planId: plan.id,
-          paymentData: {
-            cardNumber: formData.cardNumber,
-            expiryMonth: formData.expiryMonth,
-            expiryYear: formData.expiryYear,
-            cvv: formData.cvv,
-            cardholderName: formData.cardholderName,
-            email: formData.email,
-            address: formData.address,
-            city: formData.city,
-            zipCode: formData.zipCode,
-            country: formData.country
-          }
-        }),
-        credentials: 'include'
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        toast.success("Payment successful! Your subscription has been upgraded.");
-        onSuccess?.();
+      if (paymentMethod === 'paypal') {
+        // Handle PayPal payment
+        await handlePayPalPayment();
       } else {
-        toast.error(data.error || "Payment failed. Please try again.");
+        // Handle card payment
+        const response = await fetch('/api/payment/process', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            planId: plan.id,
+            paymentData: {
+              cardNumber: formData.cardNumber,
+              expiryMonth: formData.expiryMonth,
+              expiryYear: formData.expiryYear,
+              cvv: formData.cvv,
+              cardholderName: formData.cardholderName,
+              email: formData.email,
+              address: formData.address,
+              city: formData.city,
+              zipCode: formData.zipCode,
+              country: formData.country
+            }
+          }),
+          credentials: 'include'
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          toast.success("Payment successful! Your subscription has been upgraded.");
+          onSuccess?.();
+        } else {
+          toast.error(data.error || "Payment failed. Please try again.");
+        }
       }
     } catch (error) {
       console.error("Payment error:", error);
@@ -229,7 +243,12 @@ export function PaymentForm({ plan, onSuccess, onCancel }: PaymentFormProps) {
               <div className="grid grid-cols-1 gap-4">
                 {/* Credit Card Option */}
                 <div 
-                  className="p-4 rounded-xl border-2 border-purple-400 bg-purple-500/20 cursor-pointer transition-all duration-300"
+                  className={`p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 ${
+                    paymentMethod === 'card' 
+                      ? 'border-purple-400 bg-purple-500/20' 
+                      : 'border-gray-500 bg-gray-800/50 hover:border-gray-400'
+                  }`}
+                  onClick={() => setPaymentMethod('card')}
                 >
                   <div className="flex items-center space-x-3">
                     <CreditCard className="w-6 h-6 text-white" />
@@ -240,22 +259,30 @@ export function PaymentForm({ plan, onSuccess, onCancel }: PaymentFormProps) {
                   </div>
                 </div>
 
-                {/* PayPal Temporarily Disabled */}
-                <div className="p-4 rounded-xl border-2 border-gray-500 bg-gray-800/50 opacity-50">
+                {/* PayPal Option */}
+                <div 
+                  className={`p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 ${
+                    paymentMethod === 'paypal' 
+                      ? 'border-blue-400 bg-blue-500/20' 
+                      : 'border-gray-500 bg-gray-800/50 hover:border-gray-400'
+                  }`}
+                  onClick={() => setPaymentMethod('paypal')}
+                >
                   <div className="flex items-center space-x-3">
-                    <div className="w-6 h-6 bg-gray-600 rounded flex items-center justify-center">
+                    <div className="w-6 h-6 bg-blue-600 rounded flex items-center justify-center">
                       <span className="text-white font-bold text-xs">P</span>
                     </div>
                     <div>
-                      <h4 className="text-gray-400 font-semibold">PayPal (Coming Soon)</h4>
-                      <p className="text-gray-500 text-sm">Currently unavailable - Use card payment</p>
+                      <h4 className="text-white font-semibold">PayPal</h4>
+                      <p className="text-slate-300 text-sm">Pay securely with your PayPal account</p>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Card Information */}
+            {/* Card Information - Only show for card payments */}
+            {paymentMethod === 'card' && (
             <div className="space-y-6">
               <div className="flex items-center space-x-3 mb-6">
                 <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
@@ -374,8 +401,10 @@ export function PaymentForm({ plan, onSuccess, onCancel }: PaymentFormProps) {
                 )}
               </div>
             </div>
+            )}
 
-            {/* Billing Information */}
+            {/* Billing Information - Only show for card payments */}
+            {paymentMethod === 'card' && (
             <div className="space-y-6">
               <div className="flex items-center space-x-3 mb-6">
                 <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center">
@@ -471,8 +500,9 @@ export function PaymentForm({ plan, onSuccess, onCancel }: PaymentFormProps) {
                 </div>
               </div>
             </div>
+            )}
 
-            {/* Terms and Conditions */}
+            {/* Terms and Conditions - Show for both payment methods */}
             <div className="space-y-6">
               <div className="flex items-center space-x-3 mb-6">
                 <div className="w-10 h-10 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-xl flex items-center justify-center">
@@ -529,6 +559,67 @@ export function PaymentForm({ plan, onSuccess, onCancel }: PaymentFormProps) {
               </div>
             </div>
 
+            {/* PayPal Information - Only show for PayPal payments */}
+            {paymentMethod === 'paypal' && (
+            <div className="space-y-6">
+              <div className="flex items-center space-x-3 mb-6">
+                <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center">
+                  <span className="text-white font-bold text-lg">P</span>
+                </div>
+                <h3 className="text-xl md:text-2xl font-bold text-white">PayPal Payment</h3>
+              </div>
+              
+              <div className="bg-gradient-to-r from-blue-500/10 to-cyan-500/10 backdrop-blur-md border border-blue-400/20 rounded-xl p-6">
+                <div className="flex items-center space-x-3 mb-4">
+                  <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                    <span className="text-white font-bold text-sm">P</span>
+                  </div>
+                  <div>
+                    <h4 className="text-white font-semibold">PayPal Secure Payment</h4>
+                    <p className="text-blue-200 text-sm">You'll be redirected to PayPal to complete your payment</p>
+                  </div>
+                </div>
+                <div className="space-y-2 text-sm text-blue-100">
+                  <p>• Secure payment processing by PayPal</p>
+                  <p>• Payment converted to USD for PayPal</p>
+                  <p>• Your payment information is encrypted</p>
+                  <p>• No card details stored on our servers</p>
+                  <p>• Instant subscription activation after payment</p>
+                </div>
+              </div>
+            </div>
+            )}
+
+            {/* Terms and Conditions Agreement */}
+            <div className="space-y-4">
+              <div className="flex items-start space-x-3">
+                <input
+                  type="checkbox"
+                  id="termsAccepted"
+                  checked={formData.termsAccepted}
+                  onChange={(e) => setFormData(prev => ({ ...prev, termsAccepted: e.target.checked }))}
+                  className="mt-1 w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                />
+                <label htmlFor="termsAccepted" className="text-sm text-gray-300 leading-relaxed">
+                  I agree to the{' '}
+                  <a href="/terms" target="_blank" className="text-blue-400 hover:text-blue-300 underline">
+                    Terms and Conditions
+                  </a>{' '}
+                  and{' '}
+                  <a href="/privacy" target="_blank" className="text-blue-400 hover:text-blue-300 underline">
+                    Privacy Policy
+                  </a>
+                  . I understand that this is a subscription service and will be charged according to the selected plan.
+                </label>
+              </div>
+              {errors.termsAccepted && (
+                <p className="text-red-400 text-sm flex items-center">
+                  <AlertCircle className="w-4 h-4 mr-2" />
+                  {errors.termsAccepted}
+                </p>
+              )}
+            </div>
+
             {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 pt-6">
               <Button
@@ -542,8 +633,8 @@ export function PaymentForm({ plan, onSuccess, onCancel }: PaymentFormProps) {
               </Button>
               <Button
                 type="submit"
-                className="flex-1 h-12 md:h-14 text-base md:text-lg font-bold rounded-xl transition-all duration-300 hover:scale-105 shadow-2xl bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 hover:from-purple-700 hover:via-pink-700 hover:to-blue-700 shadow-purple-500/25 text-white"
-                disabled={isProcessing}
+                className="flex-1 h-12 md:h-14 text-base md:text-lg font-bold rounded-xl transition-all duration-300 hover:scale-105 shadow-2xl bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 hover:from-purple-700 hover:via-pink-700 hover:to-blue-700 shadow-purple-500/25 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isProcessing || !formData.termsAccepted}
               >
                 {isProcessing ? (
                   <div className="flex items-center space-x-2">
@@ -553,7 +644,9 @@ export function PaymentForm({ plan, onSuccess, onCancel }: PaymentFormProps) {
                 ) : (
                   <div className="flex items-center space-x-2">
                     <CheckCircle className="w-5 h-5" />
-                    <span>Pay ₹{plan.price}</span>
+                   <span>
+                     {paymentMethod === 'paypal' ? `Pay with PayPal` : `Pay ₹${plan.price}`}
+                   </span>
                   </div>
                 )}
               </Button>

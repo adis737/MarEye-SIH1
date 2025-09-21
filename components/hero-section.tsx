@@ -166,9 +166,6 @@ export function HeroSection() {
                 </div>
                 <div>
                   <h3 className="font-semibold text-white">Species ID</h3>
-                  <p className="text-sm text-cyan-200">
-                    {loading ? "Loading..." : `${stats.speciesIdentified.toLocaleString()} identified`}
-                  </p>
                 </div>
               </div>
               <div className="flex items-center space-x-3 backdrop-blur-md bg-blue-900/20 p-4 rounded-lg border border-blue-400/20">
@@ -177,9 +174,6 @@ export function HeroSection() {
                 </div>
                 <div>
                   <h3 className="font-semibold text-white">Water Quality</h3>
-                  <p className="text-sm text-blue-200">
-                    {loading ? "Loading..." : `${stats.waterQualityPoints.toLocaleString()} monitoring points`}
-                  </p>
                 </div>
               </div>
               <div className="flex items-center space-x-3 backdrop-blur-md bg-emerald-900/20 p-4 rounded-lg border border-emerald-400/20">
@@ -188,9 +182,6 @@ export function HeroSection() {
                 </div>
                 <div>
                   <h3 className="font-semibold text-white">Conservation</h3>
-                  <p className="text-sm text-emerald-200">
-                    {loading ? "Loading..." : `${stats.conservationProjects} active projects`}
-                  </p>
                 </div>
               </div>
             </div>

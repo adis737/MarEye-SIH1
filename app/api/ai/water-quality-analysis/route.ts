@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       result,
-      analysisId: analysisRecord._id,
+      analysisId: (analysisRecord as any)._id,
     })
   } catch (error) {
     console.error("[v0] Water quality analysis API error:", error)

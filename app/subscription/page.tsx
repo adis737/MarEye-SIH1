@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { SubscriptionPlans } from "@/components/subscription-plans";
 import { TokenStatus } from "@/components/token-status";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,6 +22,7 @@ export default function SubscriptionPage() {
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<string>('overview');
+  const searchParams = useSearchParams();
 
   const fetchSubscriptionInfo = async () => {
     try {
@@ -47,6 +49,14 @@ export default function SubscriptionPage() {
   useEffect(() => {
     fetchSubscriptionInfo();
   }, []);
+
+  // Handle URL parameter for tab navigation
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab && ['overview', 'plans', 'billing'].includes(tab)) {
+      setActiveTab(tab);
+    }
+  }, [searchParams]);
 
   const getPlanIcon = (plan: string) => {
     switch (plan) {
@@ -87,23 +97,12 @@ export default function SubscriptionPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-cyan-900">
-      {/* Top Home Button - Always Visible */}
-      <div className="absolute top-4 left-4 z-50">
-        <Link 
-          href="/dashboard" 
-          className="inline-flex items-center space-x-2 text-white hover:text-cyan-200 transition-colors bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 px-4 py-2 rounded-lg border-2 border-cyan-400 shadow-xl font-semibold"
-        >
-          <ArrowLeft className="w-5 h-5" />
-          <span>Home</span>
-        </Link>
-      </div>
-      
       <div className="container mx-auto px-4 pt-1 pb-4">
         {/* Header */}
         <div className="mb-3">
           <div className="flex items-center justify-between mb-2">
             <Link 
-              href="/dashboard" 
+              href="/" 
               className="inline-flex items-center space-x-2 text-white hover:text-cyan-200 transition-colors bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 px-4 py-2 rounded-lg border-2 border-cyan-400 shadow-xl font-semibold z-10"
             >
               <ArrowLeft className="w-5 h-5" />
@@ -150,7 +149,7 @@ export default function SubscriptionPage() {
             <div className="bg-gradient-to-r from-cyan-500/10 to-blue-500/10 backdrop-blur-md border border-cyan-400/20 rounded-xl p-4">
               <h2 className="text-2xl font-bold text-white mb-2">Welcome to Your Dashboard</h2>
               <p className="text-cyan-200">
-                Monitor your usage, manage your subscription and billing, and explore our AI-powered marine biodiversity platform.
+                Monitor your usage, manage your subscription and billing.
               </p>
             </div>
 
@@ -352,6 +351,7 @@ export default function SubscriptionPage() {
                 <SubscriptionPlans 
                   currentPlan={currentPlan} 
                   onPlanSelect={(planId) => {
+                    console.log("Subscription page: onPlanSelect called with:", planId);
                     setCurrentPlan(planId);
                     fetchSubscriptionInfo();
                   }}

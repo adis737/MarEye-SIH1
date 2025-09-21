@@ -5,6 +5,7 @@ import { GeistMono } from "geist/font/mono"
 import { Analytics } from "@vercel/analytics/next"
 import { Suspense } from "react"
 import { BubbleCursor } from "@/components/bubble-cursor"
+import { ConditionalNavigation } from "@/components/conditional-navigation"
 
 import { DeepSeaBackground } from "@/components/deep-sea-background"
 import { Chatbot } from "@/components/chatbot"
@@ -36,6 +37,7 @@ export default function RootLayout({
       <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable}`}>
         <DeepSeaBackground />
         <BubbleCursor />
+        <ConditionalNavigation />
         <Suspense fallback={<div>Loading...</div>}>{children}</Suspense>
 
         <Chatbot />

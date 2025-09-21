@@ -83,14 +83,14 @@ async function connectDB() {
 /** Backwards-compatible helpers some examples use */
 export async function connectToDatabase(): Promise<{ db: Db | null; connection: typeof mongoose }> {
   await connectDB();
-  return { db: mongoose.connection.db ?? null, connection: mongoose };
+  return { db: (mongoose.connection.db ?? null) as unknown as Db | null, connection: mongoose };
 }
 
 /** Get native `mongodb` Db instance */
 export async function getDatabase(): Promise<Db> {
   await connectDB();
   if (!mongoose.connection.db) throw new Error("MongoDB not connected (no native db)");
-  return mongoose.connection.db;
+  return mongoose.connection.db as unknown as Db;
 }
 
 export default connectDB;
