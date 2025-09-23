@@ -27,8 +27,3 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
-
-# other projects
-web3-crowdfunding/
-deep-sea-AI/
-marine-species-map/
