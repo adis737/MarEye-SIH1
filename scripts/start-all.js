@@ -79,10 +79,16 @@ function createVirtualEnv(dir) {
   return new Promise((resolve, reject) => {
     console.log(`🐍 Creating Python virtual environment in ${dir}...`);
     const pythonCmd = getPythonCommand();
+    
     const venvProcess = spawn(pythonCmd, ['-m', 'venv', 'venv'], {
       cwd: dir,
       stdio: 'inherit',
       shell: true
+    });
+    
+    venvProcess.on('error', (error) => {
+      console.error(`❌ Error creating virtual environment: ${error.message}`);
+      reject(new Error(`Failed to create virtual environment. Please ensure Python is installed and accessible. Error: ${error.message}`));
     });
     
     venvProcess.on('close', (code) => {
@@ -90,7 +96,7 @@ function createVirtualEnv(dir) {
         console.log(`✅ Virtual environment created in ${dir}`);
         resolve();
       } else {
-        reject(new Error(`Failed to create virtual environment in ${dir}. Make sure Python is installed and accessible.`));
+        reject(new Error(`Failed to create virtual environment in ${dir}. Exit code: ${code}. Make sure Python is installed and accessible.`));
       }
     });
   });
@@ -101,10 +107,58 @@ function installPythonRequirements(dir) {
   return new Promise((resolve, reject) => {
     console.log(`📦 Installing Python requirements in virtual environment...`);
     const venvPaths = getVenvPaths(dir);
-    const installProcess = spawn(venvPaths.pip, ['install', '-r', 'requirements.txt'], {
+    
+    // Check if pip exists
+    if (!fs.existsSync(venvPaths.pip)) {
+      console.log(`⚠️ Pip not found at ${venvPaths.pip}, trying alternative approach...`);
+      // Try using python -m pip instead
+      const pythonCmd = isWindows ? venvPaths.python : venvPaths.python;
+      const installProcess = spawn(pythonCmd, ['-m', 'pip', 'install', '-r', 'requirements.txt'], {
+        cwd: dir,
+        stdio: 'inherit',
+        shell: true
+      });
+      
+      installProcess.on('close', (code) => {
+        if (code === 0) {
+          console.log(`✅ Python requirements installed in ${dir}`);
+          resolve();
+        } else {
+          reject(new Error(`Failed to install Python requirements in ${dir}. Please check if Python and pip are properly installed.`));
+        }
+      });
+      return;
+    }
+    
+    // Windows-specific pip installation with additional flags
+    const pipArgs = isWindows 
+      ? ['install', '-r', 'requirements.txt', '--no-warn-script-location', '--disable-pip-version-check']
+      : ['install', '-r', 'requirements.txt'];
+    
+    const installProcess = spawn(venvPaths.pip, pipArgs, {
       cwd: dir,
       stdio: 'inherit',
       shell: true
+    });
+    
+    installProcess.on('error', (error) => {
+      console.error(`❌ Error running pip: ${error.message}`);
+      // Fallback to python -m pip
+      console.log(`🔄 Trying fallback method: python -m pip...`);
+      const fallbackProcess = spawn(venvPaths.python, ['-m', 'pip', 'install', '-r', 'requirements.txt'], {
+        cwd: dir,
+        stdio: 'inherit',
+        shell: true
+      });
+      
+      fallbackProcess.on('close', (code) => {
+        if (code === 0) {
+          console.log(`✅ Python requirements installed in ${dir} (using fallback method)`);
+          resolve();
+        } else {
+          reject(new Error(`Failed to install Python requirements in ${dir}. Please ensure Python and pip are properly installed and accessible.`));
+        }
+      });
     });
     
     installProcess.on('close', (code) => {
@@ -112,7 +166,7 @@ function installPythonRequirements(dir) {
         console.log(`✅ Python requirements installed in ${dir}`);
         resolve();
       } else {
-        reject(new Error(`Failed to install Python requirements in ${dir}`));
+        reject(new Error(`Failed to install Python requirements in ${dir}. Exit code: ${code}`));
       }
     });
   });
