@@ -60,9 +60,11 @@ function installNpmDependencies(dir) {
   });
 }
 
-// Function to check if virtual environment exists
+// Function to check if virtual environment exists (and is usable)
 function hasVirtualEnv(dir) {
-  return fs.existsSync(path.join(dir, 'venv'));
+  const venvDir = path.join(dir, 'venv');
+  const venvPaths = getVenvPaths(dir);
+  return fs.existsSync(venvDir) && fs.existsSync(venvPaths.python);
 }
 
 // Function to get Python command based on platform
@@ -107,68 +109,141 @@ function installPythonRequirements(dir) {
   return new Promise((resolve, reject) => {
     console.log(`📦 Installing Python requirements in virtual environment...`);
     const venvPaths = getVenvPaths(dir);
-    
-    // Check if pip exists
-    if (!fs.existsSync(venvPaths.pip)) {
-      console.log(`⚠️ Pip not found at ${venvPaths.pip}, trying alternative approach...`);
-      // Try using python -m pip instead
-      const pythonCmd = isWindows ? venvPaths.python : venvPaths.python;
-      const installProcess = spawn(pythonCmd, ['-m', 'pip', 'install', '-r', 'requirements.txt'], {
-        cwd: dir,
-        stdio: 'inherit',
-        shell: true
-      });
-      
-      installProcess.on('close', (code) => {
-        if (code === 0) {
-          console.log(`✅ Python requirements installed in ${dir}`);
-          resolve();
-        } else {
-          reject(new Error(`Failed to install Python requirements in ${dir}. Please check if Python and pip are properly installed.`));
-        }
-      });
+    console.log(`🔎 venv python: ${venvPaths.python}`);
+    console.log(`🔎 venv pip: ${venvPaths.pip}`);
+    // If venv python is missing, recreate the venv first
+    if (!fs.existsSync(venvPaths.python)) {
+      console.log(`⚠️ Virtual environment seems incomplete (missing python). Recreating venv...`);
+      createVirtualEnv(dir)
+        .then(() => {
+          console.log(`✅ Virtual environment (re)created. Proceeding to install requirements...`);
+          // Re-enter the normal flow after recreating
+          return installPythonRequirements(dir).then(resolve).catch(reject);
+        })
+        .catch((e) => reject(e));
       return;
     }
-    
-    // Windows-specific pip installation with additional flags
-    const pipArgs = isWindows 
-      ? ['install', '-r', 'requirements.txt', '--no-warn-script-location', '--disable-pip-version-check']
-      : ['install', '-r', 'requirements.txt'];
-    
-    const installProcess = spawn(venvPaths.pip, pipArgs, {
-      cwd: dir,
-      stdio: 'inherit',
-      shell: true
-    });
-    
-    installProcess.on('error', (error) => {
-      console.error(`❌ Error running pip: ${error.message}`);
-      // Fallback to python -m pip
-      console.log(`🔄 Trying fallback method: python -m pip...`);
-      const fallbackProcess = spawn(venvPaths.python, ['-m', 'pip', 'install', '-r', 'requirements.txt'], {
+
+    // If pip.exe not found, try python -m pip first
+    const recreateThenRetry = () => {
+      console.log(`🔁 Recreating virtual environment due to missing executables...`);
+      createVirtualEnv(dir)
+        .then(() => installPythonRequirements(dir).then(resolve).catch(reject))
+        .catch(reject);
+    };
+
+    const tryPipModule = () => new Promise((res, rej) => {
+      const p = spawn(venvPaths.python, ['-m', 'pip', 'install', '-r', 'requirements.txt'], {
         cwd: dir,
         stdio: 'inherit',
-        shell: true
+        shell: false
       });
-      
-      fallbackProcess.on('close', (code) => {
-        if (code === 0) {
-          console.log(`✅ Python requirements installed in ${dir} (using fallback method)`);
-          resolve();
-        } else {
-          reject(new Error(`Failed to install Python requirements in ${dir}. Please ensure Python and pip are properly installed and accessible.`));
+      p.on('error', (err) => {
+        console.error(`❌ Error spawning python for pip module: ${err.message}`);
+        if (err.code === 'ENOENT') {
+          return recreateThenRetry();
         }
+        rej(err);
+      });
+      p.on('close', (code) => {
+        if (code === 0) return res();
+        console.warn(`⚠️ python -m pip failed. Trying pip._internal entrypoint...`);
+        const script = "import sys; from pip._internal.cli.main import main as _main; sys.exit(_main(['install','-r','requirements.txt']))";
+        const p2 = spawn(venvPaths.python, ['-c', script], {
+          cwd: dir,
+          stdio: 'inherit',
+          shell: false
+        });
+        p2.on('error', (err) => {
+          console.error(`❌ Error invoking pip._internal: ${err.message}`);
+          if (err.code === 'ENOENT') {
+            return recreateThenRetry();
+          }
+          rej(err);
+        });
+        p2.on('close', (code2) => code2 === 0 ? res() : rej(new Error('pip -m failed')));
       });
     });
-    
-    installProcess.on('close', (code) => {
-      if (code === 0) {
+
+    const bootstrapEnsurePip = () => new Promise((res, rej) => {
+      const p = spawn(venvPaths.python, ['-m', 'ensurepip', '--upgrade'], {
+        cwd: dir,
+        stdio: 'inherit',
+        shell: false
+      });
+      p.on('error', (err) => {
+        console.error(`❌ Error spawning python for ensurepip: ${err.message}`);
+        if (err.code === 'ENOENT') {
+          return recreateThenRetry();
+        }
+        rej(err);
+      });
+      p.on('close', (code) => code === 0 ? res() : rej(new Error('ensurepip failed')));
+    });
+
+    const runPipExe = () => new Promise((res, rej) => {
+      const pipArgs = isWindows
+        ? ['install', '-r', 'requirements.txt', '--no-warn-script-location', '--disable-pip-version-check']
+        : ['install', '-r', 'requirements.txt'];
+      const p = spawn(venvPaths.pip, pipArgs, {
+        cwd: dir,
+        stdio: 'inherit',
+        shell: false
+      });
+      p.on('error', (err) => {
+        console.error(`❌ Error spawning pip executable: ${err.message}`);
+        if (err.code === 'ENOENT') {
+          // Fall back to python -m pip
+          return tryPipModule().then(res).catch(rej);
+        }
+        rej(err);
+      });
+      p.on('close', (code) => code === 0 ? res() : rej(new Error('pip exe failed')));
+    });
+
+    const doInstall = async () => {
+      try {
+        if (fs.existsSync(venvPaths.pip)) {
+          await runPipExe();
+          console.log(`✅ Python requirements installed in ${dir}`);
+          resolve();
+          return;
+        }
+
+        console.log(`⚠️ Pip not found at ${venvPaths.pip}, trying python -m pip...`);
+        await tryPipModule();
         console.log(`✅ Python requirements installed in ${dir}`);
         resolve();
-      } else {
-        reject(new Error(`Failed to install Python requirements in ${dir}. Exit code: ${code}`));
+      } catch (_) {
+        try {
+          console.log(`🔧 Bootstrapping pip with ensurepip...`);
+          await bootstrapEnsurePip();
+          console.log(`✅ ensurepip completed. Retrying installation...`);
+          await tryPipModule();
+          console.log(`✅ Python requirements installed in ${dir}`);
+          resolve();
+        } catch (e2) {
+          console.log(`🔄 Virtual environment appears corrupted. Deleting and recreating...`);
+          // Delete the corrupted venv and recreate
+          const venvDir = path.join(dir, 'venv');
+          if (fs.existsSync(venvDir)) {
+            fs.rmSync(venvDir, { recursive: true, force: true });
+            console.log(`🗑️ Deleted corrupted venv at ${venvDir}`);
+          }
+          
+          try {
+            await createVirtualEnv(dir);
+            console.log(`✅ Fresh virtual environment created. Retrying installation...`);
+            await installPythonRequirements(dir);
+            resolve();
+          } catch (e3) {
+            reject(new Error(`Failed to recreate venv and install requirements: ${e3.message}`));
+          }
+        }
       }
-    });
+    };
+
+    doInstall();
   });
 }
 
@@ -227,7 +302,7 @@ function startServers() {
   const flaskProcess = spawn(venvPaths.python, ['app.py'], {
     cwd: flaskDir,
     stdio: 'inherit',
-    shell: true,
+    shell: false,
     env: { ...process.env, FLASK_PORT: '5000' }
   });
 
