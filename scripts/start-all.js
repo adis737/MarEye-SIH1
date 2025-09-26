@@ -5,13 +5,28 @@ const os = require('os');
 
 console.log('🌊 Starting Oceanova with Web3 Crowdfunding Integration and Flask API...');
 
-// Cross-platform path helpers
+// Platform detection
 const isWindows = os.platform() === 'win32';
-const venvBinDir = isWindows ? 'Scripts' : 'bin';
-const pythonExecutable = isWindows ? 'python.exe' : 'python';
-const pipExecutable = isWindows ? 'pip.exe' : 'pip';
+const isLinux = os.platform() === 'linux';
+const isMac = os.platform() === 'darwin';
 
-console.log(`🖥️ Platform detected: ${isWindows ? 'Windows' : 'Unix/Linux/macOS'}`);
+console.log(`🖥️ Platform detected: ${os.platform()}`);
+
+// Platform-specific paths
+function getVenvPaths(dir) {
+  if (isWindows) {
+    return {
+      python: path.join(dir, 'venv', 'Scripts', 'python.exe'),
+      pip: path.join(dir, 'venv', 'Scripts', 'pip.exe')
+    };
+  } else {
+    // Linux and macOS
+    return {
+      python: path.join(dir, 'venv', 'bin', 'python'),
+      pip: path.join(dir, 'venv', 'bin', 'pip')
+    };
+  }
+}
 
 // Function to check if directory has node_modules
 function hasNodeModules(dir) {
@@ -50,11 +65,20 @@ function hasVirtualEnv(dir) {
   return fs.existsSync(path.join(dir, 'venv'));
 }
 
+// Function to get Python command based on platform
+function getPythonCommand() {
+  if (isWindows) {
+    return 'python'; // Windows typically uses 'python'
+  } else {
+    return 'python3'; // Linux/macOS typically uses 'python3'
+  }
+}
+
 // Function to create virtual environment
 function createVirtualEnv(dir) {
   return new Promise((resolve, reject) => {
     console.log(`🐍 Creating Python virtual environment in ${dir}...`);
-    const pythonCmd = isWindows ? 'python' : 'python3';
+    const pythonCmd = getPythonCommand();
     const venvProcess = spawn(pythonCmd, ['-m', 'venv', 'venv'], {
       cwd: dir,
       stdio: 'inherit',
@@ -66,7 +90,7 @@ function createVirtualEnv(dir) {
         console.log(`✅ Virtual environment created in ${dir}`);
         resolve();
       } else {
-        reject(new Error(`Failed to create virtual environment in ${dir}`));
+        reject(new Error(`Failed to create virtual environment in ${dir}. Make sure Python is installed and accessible.`));
       }
     });
   });
@@ -76,8 +100,8 @@ function createVirtualEnv(dir) {
 function installPythonRequirements(dir) {
   return new Promise((resolve, reject) => {
     console.log(`📦 Installing Python requirements in virtual environment...`);
-    const pipPath = path.join(dir, 'venv', venvBinDir, pipExecutable);
-    const installProcess = spawn(pipPath, ['install', '-r', 'requirements.txt'], {
+    const venvPaths = getVenvPaths(dir);
+    const installProcess = spawn(venvPaths.pip, ['install', '-r', 'requirements.txt'], {
       cwd: dir,
       stdio: 'inherit',
       shell: true
@@ -145,8 +169,8 @@ function startServers() {
 
   // Start the Flask API server using virtual environment
   const flaskDir = path.join(__dirname, '..', 'public', 'Ocean_details');
-  const pythonPath = path.join(flaskDir, 'venv', venvBinDir, pythonExecutable);
-  const flaskProcess = spawn(pythonPath, ['app.py'], {
+  const venvPaths = getVenvPaths(flaskDir);
+  const flaskProcess = spawn(venvPaths.python, ['app.py'], {
     cwd: flaskDir,
     stdio: 'inherit',
     shell: true,
