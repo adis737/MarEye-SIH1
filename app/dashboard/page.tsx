@@ -1,13 +1,12 @@
-import { DataVisualizationDashboard } from "@/components/data-visualization-dashboard"
 import { HomeButton } from "@/components/home-button"
 import { BubbleCursor } from "@/components/bubble-cursor"
-import { UpgradeBanner } from "@/components/upgrade-banner"
+import ImageQualityDashboard from "@/components/ImageQualityDashboard"
 
 export default function DashboardPage() {
   return (
     <>
       <BubbleCursor />
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 relative overflow-hidden">
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 relative overflow-hidden">
         {/* Deep sea background effects */}
         <div className="absolute inset-0 bg-gradient-radial from-blue-900/20 via-slate-900/40 to-black/60"></div>
 
@@ -36,13 +35,8 @@ export default function DashboardPage() {
         <div className="relative z-10">
           <HomeButton />
           <div className="container mx-auto px-4 py-8">
-            {/* Upgrade Banner */}
-            <div className="mb-6">
-              <UpgradeBanner variant="card" />
-            </div>
-            
-            <div className="backdrop-blur-md bg-white/5 border border-white/10 rounded-3xl p-8 shadow-2xl">
-              <DataVisualizationDashboard />
+            <div className="backdrop-blur-md bg-white/5 border border-white/10 rounded-3xl p-4 sm:p-6 shadow-2xl">
+              <ImageQualityDashboard />
             </div>
           </div>
         </div>

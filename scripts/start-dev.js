@@ -3,8 +3,8 @@ const path = require('path');
 
 console.log('🚀 Starting Next.js development server...');
 
-// Use npx to run next dev
-const devProcess = spawn('npx', ['next', 'dev'], {
+// Use the direct path to next binary or npm script
+const devProcess = spawn('npm', ['run', 'dev:direct'], {
   stdio: 'inherit',
   shell: true,
   cwd: process.cwd()

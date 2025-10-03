@@ -89,6 +89,7 @@
     "react-leaflet": "^4.2.1",
     "react-resizable-panels": "latest",
     "recharts": "latest",
+    "sharp": "^0.34.4",
     "snappy": "latest",
     "socks": "latest",
     "sonner": "latest",
@@ -96,11 +97,12 @@
     "tailwind-merge": "^2.5.5",
     "tailwindcss-animate": "^1.0.7",
     "thirdweb": "^5.107.0",
+    "uuid": "^9.0.1",
     "vaul": "latest",
     "vue": "latest",
     "vue-router": "latest",
     "xlsx": "^0.18.5",
-    "zod": "3.25.67"
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.9",
@@ -108,6 +110,7 @@
     "@types/node": "^22.18.1",
     "@types/react": "^18.3.24",
     "@types/react-dom": "^18",
+    "@types/uuid": "^9.0.8",
     "concurrently": "^9.2.1",
     "postcss": "^8.5",
     "tailwindcss": "^4.1.9",

@@ -1,0 +1,13 @@
+train: ../train/images
+val: ../valid/images
+test: ../test/images
+
+nc: 1
+names: ['Submarine']
+
+roboflow:
+  workspace: pruebas-de-200
+  project: submarine-jyoke
+  version: 1
+  license: CC BY 4.0
+  url: https://universe.roboflow.com/pruebas-de-200/submarine-jyoke/dataset/1
