@@ -1,0 +1,37 @@
+services:
+  - type: web
+    name: mareye-sih1
+    env: node
+    plan: free
+    buildCommand: |
+      # Set npm cache directory for persistence
+      export NPM_CONFIG_CACHE=/opt/render/project/.npm
+      
+      # Use npm ci for faster, reliable builds
+      echo "Installing dependencies..."
+      npm ci --frozen-lockfile --prefer-offline
+      
+      # Build the application
+      echo "Building application..."
+      npm run build:direct
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NPM_CONFIG_CACHE
+        value: /opt/render/project/.npm
+      - key: NEXT_TELEMETRY_DISABLED
+        value: 1
+    # Health check
+    healthCheckPath: /
+    # Auto-deploy from enchance branch
+    autoDeploy: true
+    branch: enchance
+    # Build settings for better caching
+    buildFilter:
+      paths:
+        - "node_modules/**"
+        - ".next/**"
+        - ".npm/**"
+        - "package-lock.json"
+        - "package.json"
