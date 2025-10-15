@@ -7,13 +7,13 @@ import os
 import numpy as np
 
 # Read the metrics
-psnr = 28.03595778448221
-ssim = 0.812528167963028
-uiqm_original = 49.81302945416192
-uiqm_enhanced = 51.582588708443936
-uiqm_improvement = 1.769559254282015
+psnr = 14.8487295296294
+ssim = 0.7012001060632215
+uiqm_original = 70.9027887257204
+uiqm_enhanced = 110.13926771859703
+uiqm_improvement = 39.23647899287663
 
-analysis_path = "D:/MAREYE-frontend(no modules, .next,venv)/Oceanova---SIH/Deep_Sea-NN-main/analytics_output/WhatsApp Video 2025-10-04 at 12.13.38_f5e175de_analysis_2025-10-15T06-21-39"
+analysis_path = "D:/SIH/MarEye-SIH1/Deep_Sea-NN-main/analytics_output/GOPR0636_analysis_2025-10-15T16-29-44"
 
 # Basic metrics graph
 fig, ax = plt.subplots(figsize=(10, 6))

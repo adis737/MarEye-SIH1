@@ -9,9 +9,8 @@
     "build:direct": "next build",
     "dev:direct": "next dev",
     "dev:port": "next dev --port 3001",
-    "dev:concurrent": "concurrently \"npm run dev\" \"npm run flask\" \"npm run crowdfunding\"",
+    "dev:concurrent": "concurrently \"npm run dev\" \"npm run flask\"",
     "flask": "node scripts/start-flask.js",
-    "crowdfunding": "node scripts/start-crowdfunding.js",
     "lint": "next lint",
     "start": "next start"
   },

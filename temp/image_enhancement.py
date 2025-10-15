@@ -106,8 +106,8 @@ if __name__ == "__main__":
         input_path = sys.argv[1]
         output_path = sys.argv[2]
     else:
-        input_path = "D:\MAREYE-frontend(no modules, .next,venv)\Oceanova---SIH\temp\input\auv.jpg"
-        output_path = "D:\MAREYE-frontend(no modules, .next,venv)\Oceanova---SIH\temp\output\enhanced_auv.jpg"
+        input_path = "D:\SIH\MarEye-SIH1\temp\input\GOPR0636.jpg"
+        output_path = "D:\SIH\MarEye-SIH1\temp\output\enhanced_GOPR0636.jpg"
     
     result = enhance_image(input_path, output_path)
     print(json.dumps(result))

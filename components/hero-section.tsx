@@ -44,9 +44,22 @@ export function HeroSection() {
           waterQualityPoints: data.waterQualityPoints || 0,
           conservationProjects: data.conservationProjects || 0,
         })
+      } else {
+        // Set default stats if API fails
+        setStats({
+          speciesIdentified: 150,
+          waterQualityPoints: 25,
+          conservationProjects: 8,
+        })
       }
     } catch (error) {
       console.error("Failed to fetch hero stats:", error)
+      // Set default stats if API fails
+      setStats({
+        speciesIdentified: 150,
+        waterQualityPoints: 25,
+        conservationProjects: 8,
+      })
     } finally {
       setLoading(false)
     }
@@ -64,8 +77,8 @@ export function HeroSection() {
 
   return (
     <section id="home" className="relative min-h-screen flex items-center justify-center overflow-hidden">
-      {/* Video Background */}
-      <video
+      {/* Video Background - Temporarily disabled */}
+      {/* <video
         autoPlay
         loop
         muted
@@ -73,7 +86,10 @@ export function HeroSection() {
         className="absolute inset-0 w-full h-full object-cover"
       >
         <source src="/Underwater loop background..mp4" type="video/mp4" />
-      </video>
+      </video> */}
+      
+      {/* Fallback gradient background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-blue-900 to-cyan-900"></div>
       
       {/* Dark overlay for better text readability */}
       <div className="absolute inset-0 bg-black/40"></div>

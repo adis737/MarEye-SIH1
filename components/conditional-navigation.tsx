@@ -18,15 +18,7 @@ export function ConditionalNavigation() {
     return null
   }
   
-  // Don't show navigation if user is not authenticated
-  if (!isAuthenticated) {
-    return null
-  }
-  
-  // Show loading state while checking authentication
-  if (loading) {
-    return null
-  }
-  
+  // Show navigation for all other pages (including unauthenticated users)
+  // This allows visitors to explore the marine security platform features
   return <Navigation />
 }
