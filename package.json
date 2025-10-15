@@ -12,7 +12,7 @@
     "dev:concurrent": "concurrently \"npm run dev\" \"npm run flask\"",
     "flask": "node scripts/start-flask.js",
     "lint": "next lint",
-    "start": "next start"
+    "start": "next start -p $PORT"
   },
   "dependencies": {
     "@ai-sdk/groq": "^2.0.20",
