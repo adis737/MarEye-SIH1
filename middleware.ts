@@ -2,16 +2,14 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 export function middleware(request: NextRequest) {
+	// Simple middleware that doesn't cause eval issues
+	// Only protect specific authenticated routes
 	const { pathname } = request.nextUrl;
-	const protectedPaths = ["/"];
-	const isProtected = protectedPaths.includes(pathname);
-
-	if (isProtected) {
-		const isAuthenticated = Boolean(request.cookies.get("auth_token")?.value);
-		if (!isAuthenticated) {
-			const url = request.nextUrl.clone();
-			url.pathname = "/try";
-			return NextResponse.redirect(url);
+	
+	if (pathname.startsWith("/profile") || pathname.startsWith("/analytics")) {
+		const authToken = request.cookies.get("auth_token");
+		if (!authToken) {
+			return NextResponse.redirect(new URL("/auth/login", request.url));
 		}
 	}
 
@@ -19,5 +17,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-	matcher: ["/"],
+	matcher: ["/profile/:path*", "/analytics/:path*"],
 };
