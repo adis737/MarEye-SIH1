@@ -7,12 +7,15 @@ services:
       # Set npm cache directory for persistence
       export NPM_CONFIG_CACHE=/opt/render/project/.npm
       
+      # Skip Python dependencies - this is a Node.js app
+      echo "Skipping Python dependencies..."
+      
       # Use npm ci for faster, reliable builds
-      echo "Installing dependencies..."
+      echo "Installing Node.js dependencies..."
       npm ci --frozen-lockfile --prefer-offline
       
       # Build the application
-      echo "Building application..."
+      echo "Building Next.js application..."
       npm run build:direct
     startCommand: npm start
     envVars:
@@ -22,6 +25,8 @@ services:
         value: /opt/render/project/.npm
       - key: NEXT_TELEMETRY_DISABLED
         value: 1
+      - key: SKIP_PYTHON_DEPS
+        value: true
     # Health check
     healthCheckPath: /
     # Auto-deploy from enchance branch

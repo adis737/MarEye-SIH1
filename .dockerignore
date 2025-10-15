@@ -72,7 +72,7 @@ Thumbs.db
 .git
 .gitignore
 
-# Python
+# Python (exclude from Node.js build)
 __pycache__/
 *.py[cod]
 *$py.class
@@ -84,6 +84,15 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+requirements.txt
+*.py
+Deep_Sea-NN-main/
+temp/
+*.pt
+*.onnx
+yolov8n.pt
+best.pt
+data.yaml
 
 # Test files
 test_*.py

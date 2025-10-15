@@ -1,0 +1,33 @@
+# Ignore Python files for Node.js deployment
+requirements.txt
+*.py
+Deep_Sea-NN-main/
+temp/
+*.pt
+*.onnx
+yolov8n.pt
+best.pt
+data.yaml
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Test files
+test_*.py
+*_test.py
+test_*.jpg
+test_*.png
+debug_*.py
+
+# Large model files
+*.h5
+*.pkl
+*.joblib
