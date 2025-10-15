@@ -4,31 +4,22 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { BubbleButton } from "@/components/bubble-button"
-import { Menu, X, User, LogOut, Settings, ChevronDown, Zap, Crown, Building2, MoreHorizontal, Phone, BarChart3, TrendingUp, Leaf } from "lucide-react"
-import { Badge } from "@/components/ui/badge"
+import { Menu, X, User, LogOut, ChevronDown } from "lucide-react"
 import { useAuth } from "@/hooks/use-auth"
 
 export function Navigation() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
-  const [isMoreOpen, setIsMoreOpen] = useState(false)
   const [avatar, setAvatar] = useState<string>("")
-  const [tokenStatus, setTokenStatus] = useState<any>(null)
-  const [subscription, setSubscription] = useState<any>(null)
   const pathname = usePathname()
   const router = useRouter()
   const { user: userData, logout } = useAuth()
 
   const navItems = [
     { href: "/", label: "Home", icon: "🏠" },
-    { href: "/dashboard", label: "Dashboard", icon: "📊" },
-    { href: "/main-model", label: "Main Model", icon: "🔬" },
+    { href: "/cnn-model", label: "CNN", icon: "🧠" },
     { href: "/detection", label: "Detection", icon: "🎯" },
-    { href: "/cnn-model", label: "CNN model", icon: "🧠" },
-    { href: "/species-recognition", label: "Species ID", icon: "🐠" },
-    { href: "/solutions/ai-processing", label: "AI Tools", icon: "🤖" },
-    { href: "/solutions/population-trends", label: "Abundance", icon: "📈" },
-    { href: "/forum", label: "Forum", icon: "💬" }
+    { href: "/analytics", label: "Analytics", icon: "📊" }
   ]
 
   // Set avatar when userData changes
@@ -38,41 +29,7 @@ export function Navigation() {
     }
   }, [userData])
 
-  // Fetch token status and subscription info
-  useEffect(() => {
-    const fetchTokenStatus = async () => {
-      try {
-        const response = await fetch('/api/tokens/status', {
-          credentials: 'include'
-        })
-        const data = await response.json()
-        if (data.success) {
-          setTokenStatus(data.tokenStatus)
-          setSubscription(data.subscription)
-        }
-      } catch (error) {
-        console.error('Error fetching token status:', error)
-      }
-    }
 
-    if (userData) {
-      fetchTokenStatus()
-    }
-  }, [userData])
-
-  const mainNavItems = [
-    { href: "/", label: "Home", icon: "🏠" },
-    { href: "/dashboard", label: "Dashboard", icon: "📊" },
-    { href: "/main-model", label: "Main Model", icon: "🔬" },
-    { href: "/solutions/ai-processing", label: "AI Processing", icon: "🤖" },
-    { href: "/species-recognition", label: "Species Recognition", icon: "🔍" },
-    { href: "/forum", label: "Forum", icon: "💬" },
-  ]
-
-  const moreNavItems = [
-    { href: "/solutions/population-trends", label: "Abundance", icon: TrendingUp },
-    { href: "/subscription", label: "Subscription", icon: Crown },
-  ]
 
   const goToContact = () => {
     console.log("Contact button clicked, navigating to /contact")
@@ -94,13 +51,13 @@ export function Navigation() {
               <div className="flex items-center space-x-2">
                 {/* Brand Logo + Text */}
                 <div className="hidden lg:flex items-center space-x-2">
-                  <img src="/placeholder-logo.png" alt="Oceanova Logo" className="w-20 h-20 drop-shadow" />
+                  <img src="/logos/mareye-logo.png" alt="MarEye Logo" className="w-20 h-20 drop-shadow" />
                   <div className="flex flex-col leading-tight">
                     <span className="text-xl font-extrabold bg-gradient-to-r from-white via-cyan-100 to-blue-100 bg-clip-text text-transparent tracking-wide">
-                      OCEANOVA
+                      MarEye
                     </span>
                     <span className="text-xs text-cyan-300/40 font-medium tracking-wider">
-                      Marine Conservation Platform
+                      Marine Security Platform
                     </span>
                   </div>
                 </div>
@@ -171,14 +128,6 @@ export function Navigation() {
                       >
                         <User className="w-4 h-4" />
                         <span>Profile Settings</span>
-                      </Link>
-                      <Link
-                        href="/main-model"
-                        className="flex items-center space-x-3 px-4 py-3 text-sm text-cyan-100 hover:text-white hover:bg-white/10 transition-colors duration-200"
-                        onClick={() => setIsProfileOpen(false)}
-                      >
-                        <Settings className="w-4 h-4" />
-                        <span>Main Model</span>
                       </Link>
                       <div className="border-t border-white/10 my-2"></div>
                       <button

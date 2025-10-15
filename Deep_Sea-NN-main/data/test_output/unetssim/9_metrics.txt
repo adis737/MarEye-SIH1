@@ -1,0 +1,8 @@
+Image Enhancement Evaluation Results
+Original: 9.jpg
+Enhanced: 9.jpg
+PSNR: 21.6077 dB
+SSIM: 0.8671
+UIQM Original: 270.7472
+UIQM Enhanced: 202.5945
+UIQM Improvement: -68.1527

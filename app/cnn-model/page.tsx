@@ -1,248 +1,905 @@
 "use client"
 
-import { useMemo, useRef, useState } from "react"
-import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, Legend, CartesianGrid } from "recharts"
+import { useState, useRef, useEffect } from "react"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Progress } from "@/components/ui/progress"
+import { Badge } from "@/components/ui/badge"
+import { 
+  Upload, 
+  Play, 
+  Download, 
+  Image as ImageIcon, 
+  Video, 
+  Brain, 
+  Zap, 
+  Target,
+  BarChart3,
+  Settings,
+  FileText,
+  CheckCircle,
+  AlertCircle,
+  Loader2,
+  Trash2
+} from "lucide-react"
 
-export default function CnnModelPage() {
-  const fileInputRef = useRef<HTMLInputElement | null>(null)
+interface ProcessingResult {
+  type?: "image" | "video"
+  originalImage?: string
+  enhancedImage?: string
+  originalVideo?: string
+  enhancedVideo?: string
+  enhancedVideoDownload?: string
+  metrics: {
+    psnr: number
+    ssim: number
+    uiqm_original: number
+    uiqm_enhanced: number
+    uiqm_improvement: number
+  }
+  processingTime: number
+  videoInfo?: {
+    framesProcessed: number
+    fps: number
+    duration: number
+    codecUsed?: string
+    enhancementMethod?: string
+  }
+  videoError?: boolean
+}
+
+export default function CNNModelPage() {
+  const [isProcessing, setIsProcessing] = useState(false)
+  const [processingProgress, setProcessingProgress] = useState(0)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
-  const [processing, setProcessing] = useState(false)
-  const [resultUrl, setResultUrl] = useState<string | null>(null)
-  const [error, setError] = useState<string | null>(null)
-  const [metrics, setMetrics] = useState<{ psnr?: number | null; ssim?: number | null; uiqm?: number | null; uiqm_orig?: number | null; uiqm_enh?: number | null; series?: { frame: number; psnr?: number|null; ssim?: number|null; uiqm_enh?: number|null; uiqm_orig?: number|null }[] } | null>(null)
-  const [originalUrl, setOriginalUrl] = useState<string | null>(null)
+  const [results, setResults] = useState<ProcessingResult[]>([])
+  const [activeTab, setActiveTab] = useState("image")
+  const [isVideoProcessing, setIsVideoProcessing] = useState(false)
+  const [videoErrors, setVideoErrors] = useState<Set<number>>(new Set())
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
-  async function onSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setError(null)
-    setResultUrl(null)
-    if (!selectedFile) return
-    setProcessing(true)
-    setMetrics(null)
+  // Add event listener to prevent page refresh and handle errors
+  useEffect(() => {
+    // Override the default error handling to prevent page refresh
+    const originalError = window.onerror
+    const originalUnhandledRejection = window.onunhandledrejection
+    
+    window.onerror = (message, source, lineno, colno, error) => {
+      console.warn("Global error caught:", message, source, lineno, colno, error)
+      
+      // Prevent Next.js manifest errors from causing page refresh
+      if (message && (
+        message.toString().includes('Unexpected end of JSON input') ||
+        message.toString().includes('loadManifest') ||
+        message.toString().includes('getNextFontManifest')
+      )) {
+        console.warn("Next.js manifest error prevented from causing page refresh")
+        return true // Prevent default error handling
+      }
+      
+      // Prevent any errors during video processing from causing page refresh
+      if (isVideoProcessing) {
+        console.warn("Error during video processing prevented from causing page refresh")
+        return true // Prevent default error handling
+      }
+      
+      // Call original error handler for other errors
+      if (originalError) {
+        return originalError(message, source, lineno, colno, error)
+      }
+      return false
+    }
+    
+    window.onunhandledrejection = (event) => {
+      console.warn("Unhandled promise rejection caught:", event.reason)
+      
+      // Prevent Next.js manifest promise rejections from causing page refresh
+      if (event.reason && event.reason.message && 
+          event.reason.message.includes('Unexpected end of JSON input')) {
+        console.warn("Next.js manifest promise rejection prevented from causing page refresh")
+        event.preventDefault()
+        return
+      }
+      
+      // Call original handler for other rejections
+      if (originalUnhandledRejection) {
+        originalUnhandledRejection(event)
+      }
+    }
+    
+    return () => {
+      window.onerror = originalError
+      window.onunhandledrejection = originalUnhandledRejection
+    }
+  }, [isVideoProcessing])
+
+  // Restore results from localStorage on page load
+  useEffect(() => {
     try {
-      const form = new FormData()
-      form.append("file", selectedFile)
-      const res = await fetch("/api/cnn-model/infer", {
-        method: "POST",
-        body: form,
-      })
-      if (!res.ok) {
-        const t = await res.text()
-        throw new Error(t || "Failed to run inference")
+      const savedResults = localStorage.getItem('cnn-processing-results')
+      if (savedResults) {
+        const parsedResults = JSON.parse(savedResults)
+        setResults(parsedResults)
+        console.log("Restored results from localStorage:", parsedResults.length, "results")
       }
-      const txt = await res.text()
-      let data: any
-      try {
-        data = JSON.parse(txt)
-      } catch {
-        throw new Error("Invalid response from server")
-      }
-      if (!data?.outputUrl) {
-        throw new Error(data?.error || "Model did not return output")
-      }
-      setResultUrl((data.outputUrl as string) + `?v=${Date.now()}`)
-      setMetrics(data.metrics ?? null)
-    } catch (err: any) {
-      setError(err?.message || "Unexpected error")
-    } finally {
-      setProcessing(false)
+    } catch (error) {
+      console.warn("Failed to restore results from localStorage:", error)
+    }
+  }, [])
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (file) {
+      setSelectedFile(file)
     }
   }
 
-  return (
-    <div className="min-h-screen pt-24 px-6 relative z-20">
-      <div className="max-w-3xl mx-auto bg-slate-900/70 backdrop-blur-sm border border-slate-700 rounded-xl p-6">
-        <h1 className="text-2xl font-bold text-cyan-200 mb-4">CNN Model Inference</h1>
-        <p className="text-slate-300 mb-6">Upload an underwater image or a video file. The model will enhance it and return the processed result.</p>
+  const processImage = async () => {
+    if (!selectedFile) return
 
-        <div className="mb-4 p-5 border-2 border-dashed border-cyan-500/40 rounded-lg bg-slate-900/30">
-          <div className="flex items-center justify-between gap-4 flex-wrap">
-            <div className="text-slate-200 text-sm">
-              {selectedFile ? (
-                <div>
-                  <div className="font-medium">Selected:</div>
-                  <div className="text-cyan-200 break-all">{selectedFile.name} ({Math.ceil(selectedFile.size/1024)} KB)</div>
+    setIsProcessing(true)
+    setProcessingProgress(0)
+
+    try {
+      // Create form data
+      const formData = new FormData()
+      formData.append("file", selectedFile)
+      formData.append("type", "image")
+
+      // Simulate progress updates
+      const progressInterval = setInterval(() => {
+        setProcessingProgress(prev => {
+          if (prev >= 90) return prev
+          return prev + Math.random() * 10
+        })
+      }, 500)
+
+      // Call the API
+      const response = await fetch("/api/cnn/process", {
+        method: "POST",
+        body: formData,
+      })
+
+      clearInterval(progressInterval)
+      setProcessingProgress(100)
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || "Processing failed")
+      }
+
+      const result = await response.json()
+
+      if (result.success) {
+        const processingResult: ProcessingResult = {
+          type: "image",
+          originalImage: URL.createObjectURL(selectedFile),
+          enhancedImage: result.enhancedImage,
+          metrics: result.metrics,
+          processingTime: result.processingTime
+        }
+
+        setResults(prev => [processingResult, ...prev])
+      } else {
+        throw new Error("Processing failed")
+      }
+        } catch (error) {
+          console.error("Processing error:", error)
+          
+          // Show more specific error messages
+          let errorMessage = "Unknown error"
+          if (error instanceof Error) {
+        if (error.message.includes("Could not open input video")) {
+          errorMessage = "Could not open the video file. Please check the file format."
+        } else if (error.message.includes("Could not create output video")) {
+          errorMessage = "Video codec issue. Please try a different video format."
+        } else if (error.message.includes("Failed to load CNN model")) {
+          errorMessage = "CNN model loading failed. Please try again."
+        } else if (error.message.includes("Required file not found")) {
+          errorMessage = "Required files missing. Please contact support."
+        } else if (error.message.includes("encoding issue")) {
+          errorMessage = "Video processing failed due to encoding issue. Please try again."
+        } else if (error.message.includes("codec not supported")) {
+          errorMessage = "Video codec not supported. The system is trying alternative codecs."
+        } else if (error.message.includes("Network error")) {
+          errorMessage = "Network connection issue. Please check your connection."
+        } else if (error.message.includes("timed out")) {
+          errorMessage = "Video processing timed out. Please try with a shorter video."
+        } else {
+          errorMessage = error.message
+        }
+          }
+          
+          alert(`Error: ${errorMessage}`)
+        } finally {
+      setIsProcessing(false)
+      setProcessingProgress(0)
+    }
+  }
+
+
+  const processVideo = async () => {
+    if (!selectedFile) {
+      console.error("No file selected for video processing")
+      alert("Please select a video file first")
+      return
+    }
+
+    console.log("Starting video processing:")
+    console.log("- Selected file:", selectedFile.name)
+    console.log("- File size:", selectedFile.size)
+    console.log("- File type:", selectedFile.type)
+
+    setIsProcessing(true)
+    setIsVideoProcessing(true)
+    setProcessingProgress(0)
+
+    try {
+      // Create form data
+      const formData = new FormData()
+      formData.append("file", selectedFile)
+      formData.append("type", "video")
+      
+      console.log("FormData created with file and type")
+
+      // Simulate progress updates
+      const progressInterval = setInterval(() => {
+        setProcessingProgress(prev => {
+          if (prev >= 90) return prev
+          return prev + Math.random() * 5
+        })
+      }, 1000)
+
+      // Call the API with timeout handling
+      console.log("Sending request to /api/cnn/process")
+      
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 120000) // 2 minute timeout
+      
+      let response
+      try {
+        response = await fetch("/api/cnn/process", {
+          method: "POST",
+          body: formData,
+          signal: controller.signal
+        })
+
+        clearTimeout(timeoutId)
+        clearInterval(progressInterval)
+        setProcessingProgress(100)
+
+        console.log("API Response received:")
+        console.log("- Status:", response.status)
+        console.log("- OK:", response.ok)
+        console.log("- Headers:", Object.fromEntries(response.headers.entries()))
+
+        if (!response.ok) {
+          const errorData = await response.json()
+          console.error("API Error:", errorData)
+          throw new Error(errorData.error || "Video processing failed")
+        }
+      } catch (error) {
+        clearTimeout(timeoutId)
+        clearInterval(progressInterval)
+        setProcessingProgress(0)
+        
+        if (error.name === 'AbortError') {
+          console.error("Request timed out after 2 minutes")
+          throw new Error("Video processing timed out. Please try with a shorter video.")
+        } else {
+          console.error("Network error:", error)
+          throw new Error(`Network error: ${error.message}`)
+        }
+      }
+
+      const result = await response.json()
+      console.log("API Response result:", result)
+      console.log("Result keys:", Object.keys(result))
+      console.log("Result success:", result.success)
+      console.log("Result type:", result.type)
+      console.log("Enhanced video length:", result.enhancedVideo ? result.enhancedVideo.length : "No enhanced video")
+
+      if (result.success) {
+        // Convert base64 download data to blob URL for better playback
+        let enhancedVideoUrl = result.enhancedVideo
+        
+        if (result.enhancedVideoDownload && result.enhancedVideoDownload.startsWith('data:')) {
+          try {
+            // Extract base64 data
+            const base64Data = result.enhancedVideoDownload.split(',')[1]
+            const mimeType = result.enhancedVideoDownload.split(':')[1].split(';')[0]
+            
+            // Convert to blob
+            const byteCharacters = atob(base64Data)
+            const byteNumbers = new Array(byteCharacters.length)
+            for (let i = 0; i < byteCharacters.length; i++) {
+              byteNumbers[i] = byteCharacters.charCodeAt(i)
+            }
+            const byteArray = new Uint8Array(byteNumbers)
+            const blob = new Blob([byteArray], { type: mimeType })
+            
+            // Create blob URL
+            enhancedVideoUrl = URL.createObjectURL(blob)
+            console.log("Created blob URL for enhanced video:", enhancedVideoUrl)
+          } catch (error) {
+            console.warn("Failed to create blob URL, using API URL:", error)
+          }
+        }
+        
+        const processingResult: ProcessingResult = {
+          type: "video",
+          originalVideo: URL.createObjectURL(selectedFile),
+          enhancedVideo: enhancedVideoUrl,
+          enhancedVideoDownload: result.enhancedVideoDownload,
+          metrics: result.metrics,
+          processingTime: result.processingTime,
+          videoInfo: result.videoInfo
+        }
+        
+        console.log("Processing result created:", processingResult)
+        console.log("Enhanced video URL:", processingResult.enhancedVideo)
+
+        // Use a more stable state update to prevent page refresh
+        setResults(prev => {
+          const newResults = [processingResult, ...prev]
+          // Store in localStorage to survive page refreshes
+          try {
+            localStorage.setItem('cnn-processing-results', JSON.stringify(newResults))
+          } catch (error) {
+            console.warn("Failed to save results to localStorage:", error)
+          }
+          return newResults
+        })
+        
+        // Clear selected file to prevent re-processing
+        setSelectedFile(null)
+      } else {
+        throw new Error("Video processing failed")
+      }
+    } catch (error) {
+      console.error("Video processing error:", error)
+      
+      // Show more specific error messages
+      let errorMessage = "Unknown error"
+      if (error instanceof Error) {
+        if (error.message.includes("Could not open input video")) {
+          errorMessage = "Could not open the video file. Please check the file format."
+        } else if (error.message.includes("Could not create output video")) {
+          errorMessage = "Video codec issue. Please try a different video format."
+        } else if (error.message.includes("Failed to load CNN model")) {
+          errorMessage = "CNN model loading failed. Please try again."
+        } else if (error.message.includes("Required file not found")) {
+          errorMessage = "Required files missing. Please contact support."
+        } else if (error.message.includes("encoding issue")) {
+          errorMessage = "Video processing failed due to encoding issue. Please try again."
+        } else if (error.message.includes("codec not supported")) {
+          errorMessage = "Video codec not supported. The system is trying alternative codecs."
+        } else if (error.message.includes("Network error")) {
+          errorMessage = "Network connection issue. Please check your connection."
+        } else if (error.message.includes("timed out")) {
+          errorMessage = "Video processing timed out. Please try with a shorter video."
+        } else {
+          errorMessage = error.message
+        }
+      }
+      
+      alert(`Error: ${errorMessage}`)
+    } finally {
+      setIsProcessing(false)
+      setIsVideoProcessing(false)
+      setProcessingProgress(0)
+    }
+  }
+
+  const handleDeleteResult = (index: number) => {
+    setResults(prev => {
+      // Revoke blob URLs to free memory
+      const resultToDelete = prev[index]
+      if (resultToDelete?.enhancedVideo?.startsWith('blob:')) {
+        URL.revokeObjectURL(resultToDelete.enhancedVideo)
+      }
+      if (resultToDelete?.originalVideo?.startsWith('blob:')) {
+        URL.revokeObjectURL(resultToDelete.originalVideo)
+      }
+      
+      const newResults = prev.filter((_, i) => i !== index)
+      try {
+        localStorage.setItem('cnn-processing-results', JSON.stringify(newResults))
+      } catch (error) {
+        console.warn("Failed to update localStorage:", error)
+      }
+      return newResults
+    })
+    // Also remove from video errors set
+    setVideoErrors(prev => {
+      const newSet = new Set(prev)
+      newSet.delete(index)
+      return newSet
+    })
+  }
+
+  const handleVideoError = (index: number) => {
+    setVideoErrors(prev => new Set(prev).add(index))
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-cyan-950 relative">
+      
+      {/* Header Section */}
+      <div className="relative z-10 pt-24 pb-12">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <div className="flex items-center justify-center mb-6">
+              <div className="w-16 h-16 bg-gradient-to-br from-cyan-400/30 to-blue-500/30 rounded-2xl flex items-center justify-center mr-4">
+                <Brain className="w-8 h-8 text-cyan-300" />
+              </div>
+              <h1 className="text-4xl md:text-6xl font-bold text-white bg-gradient-to-r from-cyan-300 to-blue-300 bg-clip-text text-transparent">
+                CNN Model
+              </h1>
+            </div>
+            <p className="text-xl text-cyan-200 max-w-3xl mx-auto leading-relaxed">
+              Advanced Convolutional Neural Network for underwater image enhancement and video processing. 
+              Transform murky underwater footage into crystal-clear imagery for marine security operations.
+            </p>
+          </div>
+
+          {/* Model Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
+            <Card className="bg-slate-900/40 backdrop-blur-md border-cyan-500/30">
+              <CardContent className="p-6 text-center">
+                <Zap className="w-8 h-8 text-emerald-400 mx-auto mb-2" />
+                <div className="text-2xl font-bold text-white">2.5 FPS</div>
+                <div className="text-sm text-cyan-300">Processing Speed</div>
+              </CardContent>
+            </Card>
+            <Card className="bg-slate-900/40 backdrop-blur-md border-cyan-500/30">
+              <CardContent className="p-6 text-center">
+                <Target className="w-8 h-8 text-blue-400 mx-auto mb-2" />
+                <div className="text-2xl font-bold text-white">512×512</div>
+                <div className="text-sm text-cyan-300">Input Resolution</div>
+              </CardContent>
+            </Card>
+            <Card className="bg-slate-900/40 backdrop-blur-md border-cyan-500/30">
+              <CardContent className="p-6 text-center">
+                <BarChart3 className="w-8 h-8 text-purple-400 mx-auto mb-2" />
+                <div className="text-2xl font-bold text-white">7.7MB</div>
+                <div className="text-sm text-cyan-300">Model Size</div>
+              </CardContent>
+            </Card>
+            <Card className="bg-slate-900/40 backdrop-blur-md border-cyan-500/30">
+              <CardContent className="p-6 text-center">
+                <Settings className="w-8 h-8 text-orange-400 mx-auto mb-2" />
+                <div className="text-2xl font-bold text-white">U-Net</div>
+                <div className="text-sm text-cyan-300">Architecture</div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Main Processing Interface */}
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-2 bg-slate-900/40 backdrop-blur-md border border-cyan-500/30">
+              <TabsTrigger value="image" className="flex items-center space-x-2">
+                <ImageIcon className="w-4 h-4" />
+                <span>Image Enhancement</span>
+              </TabsTrigger>
+              <TabsTrigger value="video" className="flex items-center space-x-2">
+                <Video className="w-4 h-4" />
+                <span>Video Processing</span>
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="image" className="mt-6">
+              <Card className="bg-slate-900/40 backdrop-blur-md border-cyan-500/30">
+                <CardHeader>
+                  <CardTitle className="text-white flex items-center space-x-2">
+                    <ImageIcon className="w-5 h-5 text-cyan-400" />
+                    <span>Image Enhancement</span>
+                  </CardTitle>
+                  <CardDescription className="text-cyan-300">
+                    Upload an underwater image to enhance its clarity, color, and overall quality using our CNN model.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {/* File Upload */}
+                  <div className="border-2 border-dashed border-cyan-500/30 rounded-xl p-8 text-center hover:border-cyan-400/50 transition-colors">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFileUpload}
+                      className="hidden"
+                    />
+                    <Upload className="w-12 h-12 text-cyan-400 mx-auto mb-4" />
+                    <p className="text-white mb-2">Click to upload an image or drag and drop</p>
+                    <p className="text-sm text-cyan-300 mb-4">Supports JPG, PNG, BMP formats</p>
+                    <Button
+                      onClick={() => fileInputRef.current?.click()}
+                      variant="outline"
+                      className="border-cyan-400/50 text-cyan-300 hover:bg-cyan-400/10"
+                    >
+                      Choose File
+                    </Button>
+                    {selectedFile && (
+                      <div className="mt-4 p-3 bg-slate-800/50 rounded-lg">
+                        <p className="text-sm text-white">Selected: {selectedFile.name}</p>
+                        <p className="text-xs text-cyan-300">Size: {(selectedFile.size / 1024 / 1024).toFixed(2)} MB</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Processing Controls */}
+                  <div className="flex justify-center">
+                    <Button
+                      onClick={processImage}
+                      disabled={!selectedFile || isProcessing}
+                      className="bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-white px-8 py-3 rounded-xl font-semibold"
+                    >
+                      {isProcessing ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Processing...
+                        </>
+                      ) : (
+                        <>
+                          <Play className="w-4 h-4 mr-2" />
+                          Enhance Image
+                        </>
+                      )}
+                    </Button>
+                  </div>
+
+                  {/* Processing Progress */}
+                  {isProcessing && (
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm text-cyan-300">
+                        <span>Processing...</span>
+                        <span>{Math.round(processingProgress)}%</span>
+                      </div>
+                      <Progress value={processingProgress} className="h-2" />
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="video" className="mt-6">
+              <Card className="bg-slate-900/40 backdrop-blur-md border-cyan-500/30">
+                <CardHeader>
+                  <CardTitle className="text-white flex items-center space-x-2">
+                    <Video className="w-5 h-5 text-cyan-400" />
+                    <span>Video Processing</span>
+                  </CardTitle>
+                  <CardDescription className="text-cyan-300">
+                    Upload an underwater video to enhance all frames using our CNN model with comprehensive analytics.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {/* File Upload */}
+                  <div className="border-2 border-dashed border-cyan-500/30 rounded-xl p-8 text-center hover:border-cyan-400/50 transition-colors">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="video/*"
+                      onChange={handleFileUpload}
+                      className="hidden"
+                    />
+                    <Video className="w-12 h-12 text-cyan-400 mx-auto mb-4" />
+                    <p className="text-white mb-2">Click to upload a video or drag and drop</p>
+                    <p className="text-sm text-cyan-300 mb-4">Supports MP4, AVI, MOV, MKV formats</p>
+                    <Button
+                      onClick={() => fileInputRef.current?.click()}
+                      variant="outline"
+                      className="border-cyan-400/50 text-cyan-300 hover:bg-cyan-400/10"
+                    >
+                      Choose Video
+                    </Button>
+                    {selectedFile && (
+                      <div className="mt-4 p-3 bg-slate-800/50 rounded-lg">
+                        <p className="text-sm text-white">Selected: {selectedFile.name}</p>
+                        <p className="text-xs text-cyan-300">Size: {(selectedFile.size / 1024 / 1024).toFixed(2)} MB</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Processing Controls */}
+                  <div className="flex justify-center">
+                    <Button
+                      onClick={processVideo}
+                      disabled={!selectedFile || isProcessing}
+                      className="bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-white px-8 py-3 rounded-xl font-semibold"
+                    >
+                      {isProcessing ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Processing...
+                        </>
+                      ) : (
+                        <>
+                          <Play className="w-4 h-4 mr-2" />
+                          Process Video
+                        </>
+                      )}
+                    </Button>
+                  </div>
+
+                  {/* Processing Progress */}
+                  {isProcessing && (
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm text-cyan-300">
+                        <span>Processing video frames...</span>
+                        <span>{Math.round(processingProgress)}%</span>
+                      </div>
+                      <Progress value={processingProgress} className="h-2" />
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+
+          {/* Results Section */}
+          {results.length > 0 && (
+            <div className="mt-12">
+              <h2 className="text-2xl font-bold text-white mb-6 flex items-center space-x-2">
+                <CheckCircle className="w-6 h-6 text-emerald-400" />
+                <span>Processing Results</span>
+              </h2>
+              
+              <div className="space-y-6">
+                {results.map((result, index) => (
+                  <Card key={index} className="bg-slate-900/40 backdrop-blur-md border-cyan-500/30">
+                    <CardContent className="p-6">
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        {/* Images/Videos */}
+                        <div className="space-y-4">
+                          <div>
+                            <h3 className="text-lg font-semibold text-white mb-2">Original</h3>
+                            {result.type === "video" ? (
+                              <video 
+                                src={result.originalVideo} 
+                                controls
+                                className="w-full h-48 object-cover rounded-lg border border-cyan-500/30"
+                              >
+                                Your browser does not support the video tag.
+                              </video>
+                            ) : (
+                              <img 
+                                src={result.originalImage} 
+                                alt="Original" 
+                                className="w-full h-48 object-cover rounded-lg border border-cyan-500/30"
+                              />
+                            )}
+                          </div>
+         <div>
+           <h3 className="text-lg font-semibold text-white mb-2">Enhanced</h3>
+           {result.type === "video" ? (
+             <div>
+               <div className="relative">
+                 {result.enhancedVideo ? (
+                   videoErrors.has(index) ? (
+                     <div className="w-full h-48 bg-gray-800 rounded-lg border border-red-500/30 flex items-center justify-center text-red-400">
+                       <div className="text-center">
+                         <p className="text-sm">Video playback failed</p>
+                         <p className="text-xs mt-1">Codec: {result.videoInfo?.codecUsed || 'Unknown'}</p>
+                         {result.metrics?.uiqm_improvement < 0 ? (
+                           <p className="text-xs mt-1 text-yellow-400">⚠ Model may be degrading quality</p>
+                         ) : (
+                           <p className="text-xs mt-1 text-green-400">✓ Enhancement successful!</p>
+                         )}
+                         <p className="text-xs mt-1">Use download button below</p>
+                       </div>
+                     </div>
+                   ) : (
+                     <video 
+                       key={`video-${index}`}
+                       controls
+                       preload="auto"
+                       playsInline
+                       className="w-full h-48 object-cover rounded-lg border border-emerald-500/30"
+                       onError={(e) => {
+                         const videoElement = e.currentTarget
+                         const error = videoElement.error
+                         console.error("Video error:", {
+                           code: error?.code,
+                           message: error?.message,
+                           src: result.enhancedVideo,
+                           codec: result.videoInfo?.codecUsed
+                         })
+                         handleVideoError(index)
+                       }}
+                       onLoadedMetadata={() => {
+                         console.log("Video metadata loaded successfully")
+                         console.log("Codec:", result.videoInfo?.codecUsed)
+                       }}
+                       onCanPlay={() => console.log("Video can play")}
+                       onLoadStart={() => console.log("Video load started")}
+                     >
+                       <source src={result.enhancedVideo} type="video/mp4" />
+                       <source src={result.enhancedVideo} type="video/mp4; codecs=avc1" />
+                       Your browser does not support the video tag or the video codec.
+                     </video>
+                   )
+                 ) : (
+                   <div className="w-full h-48 bg-gray-800 rounded-lg border border-red-500/30 flex items-center justify-center text-red-400">
+                     <div className="text-center">
+                       <p className="text-sm">Enhanced video not available</p>
+                       <p className="text-xs mt-1">Please try processing again</p>
+                     </div>
+                   </div>
+                 )}
+               </div>
+               <div className="text-xs text-gray-400 mt-1">
+                 Video URL length: {result.enhancedVideo ? result.enhancedVideo.length : "No URL"}
+                 {result.videoInfo?.codecUsed && (
+                   <div>Codec: {result.videoInfo.codecUsed}</div>
+                 )}
+               </div>
+               <div className="mt-2">
+                 <a 
+                   href={result.enhancedVideo} 
+                   download={`enhanced_${result.originalFileName || 'video.mp4'}`}
+                   className="inline-block px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded"
+                 >
+                   Download Enhanced Video
+                 </a>
+               </div>
+             </div>
+           ) : (
+             <img 
+               src={result.enhancedImage} 
+               alt="Enhanced" 
+               className="w-full h-48 object-cover rounded-lg border border-emerald-500/30"
+             />
+           )}
+         </div>
+                        </div>
+
+                        {/* Metrics */}
+                        <div className="space-y-4">
+                          <h3 className="text-lg font-semibold text-white mb-4">Quality Metrics</h3>
+                          
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="bg-slate-800/50 rounded-lg p-4">
+                              <div className="text-sm text-cyan-300 mb-1">PSNR</div>
+                              <div className="text-2xl font-bold text-white">{(result.metrics.psnr || 0).toFixed(2)} dB</div>
+                              <Badge variant="secondary" className="mt-1 text-xs">
+                                {(result.metrics.psnr || 0) > 20 ? "Good" : "Low"}
+                              </Badge>
+                            </div>
+                            
+                            <div className="bg-slate-800/50 rounded-lg p-4">
+                              <div className="text-sm text-cyan-300 mb-1">SSIM</div>
+                              <div className="text-2xl font-bold text-white">{(result.metrics.ssim || 0).toFixed(4)}</div>
+                              <Badge variant="secondary" className="mt-1 text-xs">
+                                {(result.metrics.ssim || 0) > 0.8 ? "High" : "Moderate"}
+                              </Badge>
+                            </div>
+                            
+                            <div className="bg-slate-800/50 rounded-lg p-4">
+                              <div className="text-sm text-cyan-300 mb-1">UIQM Original</div>
+                              <div className="text-2xl font-bold text-white">{(result.metrics.uiqm_original || 0).toFixed(2)}</div>
+                            </div>
+                            
+                            <div className="bg-slate-800/50 rounded-lg p-4">
+                              <div className="text-sm text-cyan-300 mb-1">UIQM Enhanced</div>
+                              <div className="text-2xl font-bold text-white">{(result.metrics.uiqm_enhanced || 0).toFixed(2)}</div>
+                            </div>
+                          </div>
+
+                          <div className="bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 rounded-lg p-4 border border-emerald-500/30">
+                            <div className="text-sm text-emerald-300 mb-1">UIQM Improvement</div>
+                            <div className="text-2xl font-bold text-emerald-400">
+                              {(result.metrics.uiqm_improvement || 0) >= 0 ? '+' : ''}{(result.metrics.uiqm_improvement || 0).toFixed(2)}
+                            </div>
+                            <div className="text-xs text-emerald-300 mt-1">
+                              {(result.metrics.uiqm_improvement || 0) > 0 ? "Enhancement successful" : "Enhancement failed"}
+                            </div>
+                          </div>
+
+                          {/* Video Info */}
+                          {result.type === "video" && result.videoInfo && (
+                            <div className="bg-slate-800/50 rounded-lg p-4">
+                              <h4 className="text-sm font-semibold text-cyan-300 mb-2">Video Information</h4>
+                              <div className="grid grid-cols-3 gap-2 text-xs">
+                                <div>
+                                  <div className="text-slate-400">Frames</div>
+                                  <div className="text-white font-semibold">{result.videoInfo.framesProcessed}</div>
+                                </div>
+                                <div>
+                                  <div className="text-slate-400">FPS</div>
+                                  <div className="text-white font-semibold">{result.videoInfo.fps}</div>
+                                </div>
+                                <div>
+                                  <div className="text-slate-400">Duration</div>
+                                  <div className="text-white font-semibold">{result.videoInfo.duration.toFixed(1)}s</div>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          <div className="flex items-center justify-between pt-4 border-t border-slate-700">
+                            <div className="text-sm text-cyan-300">
+                              Processing time: {(result.processingTime || 0).toFixed(3)}s
+                            </div>
+                            <div className="flex gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="border-cyan-400/50 text-cyan-300 hover:bg-cyan-400/10"
+                                onClick={() => {
+                                  const link = document.createElement('a')
+                                  if (result.type === 'video') {
+                                    // Use the download URL with base64 data
+                                    link.href = result.enhancedVideoDownload || result.enhancedVideo || ''
+                                    link.download = `enhanced_video_${Date.now()}.mp4`
+                                  } else {
+                                    link.href = result.enhancedImage || ''
+                                    link.download = `enhanced_image_${Date.now()}.png`
+                                  }
+                                  link.click()
+                                }}
+                              >
+                                <Download className="w-4 h-4 mr-2" />
+                                Download
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="border-red-400/50 text-red-300 hover:bg-red-400/10"
+                                onClick={() => handleDeleteResult(index)}
+                              >
+                                <Trash2 className="w-4 h-4 mr-2" />
+                                Delete
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Model Information */}
+          <div className="mt-12">
+            <Card className="bg-slate-900/40 backdrop-blur-md border-cyan-500/30">
+              <CardHeader>
+                <CardTitle className="text-white flex items-center space-x-2">
+                  <FileText className="w-5 h-5 text-cyan-400" />
+                  <span>Model Information</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <h4 className="text-lg font-semibold text-white mb-3">Architecture Details</h4>
+                    <ul className="space-y-2 text-cyan-300">
+                      <li>• <strong className="text-white">Model:</strong> Truncated U-Net</li>
+                      <li>• <strong className="text-white">Input Size:</strong> 512×512 pixels</li>
+                      <li>• <strong className="text-white">Channels:</strong> 3 (RGB)</li>
+                      <li>• <strong className="text-white">Loss Function:</strong> MS-SSIM + L1</li>
+                      <li>• <strong className="text-white">Training Data:</strong> EUVP dataset (5885 images)</li>
+                    </ul>
+                  </div>
+                  <div>
+                    <h4 className="text-lg font-semibold text-white mb-3">Performance Metrics</h4>
+                    <ul className="space-y-2 text-cyan-300">
+                      <li>• <strong className="text-white">CPU Inference:</strong> ~400ms per image</li>
+                      <li>• <strong className="text-white">ONNX Runtime:</strong> ~440ms per image</li>
+                      <li>• <strong className="text-white">Model Size:</strong> 7.7MB (ONNX)</li>
+                      <li>• <strong className="text-white">Memory Usage:</strong> ~200MB</li>
+                      <li>• <strong className="text-white">Edge Ready:</strong> Jetson, NUC, Raspberry Pi</li>
+                    </ul>
+                  </div>
                 </div>
-              ) : (
-                <div className="text-slate-400">No file selected</div>
-              )}
-              <div className="text-slate-400 mt-1">Accepted: images (jpg, png) and videos (mp4)</div>
-            </div>
-            <div>
-              <input
-                ref={fileInputRef}
-                id="cnn-file-input"
-                className="hidden"
-                type="file"
-                accept="image/*,video/*"
-                onChange={(e) => {
-                  const f = e.target.files?.[0] ?? null
-                  setSelectedFile(f)
-                  setResultUrl(null)
-                  setError(null)
-                  if (originalUrl) URL.revokeObjectURL(originalUrl)
-                  setOriginalUrl(f ? URL.createObjectURL(f) : null)
-                }}
-              />
-              <label
-                htmlFor="cnn-file-input"
-                className="cursor-pointer inline-flex items-center px-4 py-2 rounded bg-cyan-600 hover:bg-cyan-500 text-white text-sm"
-              >
-                Choose file
-              </label>
-            </div>
+              </CardContent>
+            </Card>
           </div>
-        </div>
-
-        <form onSubmit={onSubmit} className="space-y-4">
-          <button disabled={processing || !selectedFile} className="px-5 py-3 rounded bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 text-white font-medium">
-            {processing ? "Processing..." : "Run Inference"}
-          </button>
-        </form>
-
-        {error && <div className="mt-4 text-red-400">{error}</div>}
-
-        {resultUrl && selectedFile && selectedFile.type.startsWith("video/") && (
-          <div className="mt-6">
-            <h2 className="text-lg font-semibold text-cyan-200 mb-3">Comparison</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <div className="text-slate-300 mb-2">Original</div>
-                <video src={originalUrl ?? undefined} controls className="rounded border border-slate-700 w-full" />
-              </div>
-              <div>
-                <div className="text-slate-300 mb-2">Result</div>
-                <video key={resultUrl} controls preload="metadata" className="rounded border border-slate-700 w-full">
-                  <source src={resultUrl || undefined} type={resultUrl?.endsWith('.webm') ? 'video/webm' : 'video/mp4'} />
-                </video>
-              </div>
-            </div>
-            {metrics && (
-              <div className="mt-4 text-slate-200 text-sm flex gap-6 flex-wrap">
-                {typeof metrics.psnr === 'number' && <div>Avg PSNR (Peak Signal-to-Noise Ratio): <span className="text-cyan-300">{metrics.psnr.toFixed(2)} dB</span></div>}
-                {typeof metrics.ssim === 'number' && <div>Avg SSIM (Structural Similarity Index): <span className="text-cyan-300">{metrics.ssim.toFixed(3)}</span></div>}
-                {typeof metrics.uiqm === 'number' && <div>Avg UIQM (Underwater Image Quality Measure): <span className="text-cyan-300">{metrics.uiqm.toFixed(2)}</span></div>}
-              </div>
-            )}
-            <a href={resultUrl} download className="mt-3 inline-block text-cyan-300 underline">Download result</a>
-          </div>
-        )}
-
-        {resultUrl && selectedFile && selectedFile.type.startsWith("image/") && (
-          <div className="mt-6">
-            <h2 className="text-lg font-semibold text-cyan-200 mb-3">Comparison</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <div className="text-slate-300 mb-2">Original</div>
-                <img src={originalUrl ?? undefined} alt="Original" className="rounded border border-slate-700 w-full" />
-              </div>
-              <div>
-                <div className="text-slate-300 mb-2">Result</div>
-                <img src={resultUrl} alt="Enhanced output" className="rounded border border-slate-700 w-full" />
-              </div>
-            </div>
-            {metrics && (
-              <div className="mt-4 text-slate-200 text-sm flex gap-6 flex-wrap">
-                {typeof metrics.psnr === 'number' && <div>PSNR (Peak Signal-to-Noise Ratio): <span className="text-cyan-300">{metrics.psnr.toFixed(2)} dB</span></div>}
-                {typeof metrics.ssim === 'number' && <div>SSIM (Structural Similarity Index): <span className="text-cyan-300">{metrics.ssim.toFixed(3)}</span></div>}
-                {typeof metrics.uiqm === 'number' && <div>UIQM (Underwater Image Quality Measure): <span className="text-cyan-300">{metrics.uiqm.toFixed(2)}</span></div>}
-              </div>
-            )}
-            <a href={resultUrl} download className="mt-3 inline-block text-cyan-300 underline">Download result</a>
-          </div>
-        )}
-
-        {metrics?.series && selectedFile && selectedFile.type.startsWith("video/") && (
-          <div className="mt-6 rounded-xl bg-slate-900/60 border border-slate-700 p-4">
-            <div className="text-cyan-200 font-medium mb-3">Quality Metrics Over Time</div>
-            <ChartsGrid series={metrics.series} />
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
-function MiniLineChart({ data }: { data: { frame: number; psnr?: number|null; ssim?: number|null; uiqm?: number|null }[] }) {
-  // Lightweight inline chart using SVG to avoid pulling recharts on this page
-  const width = 600
-  const height = 160
-  const padding = 28
-  const ps = useMemo(() => data.map(d => (d.psnr ?? 0)), [data])
-  const ss = useMemo(() => data.map(d => (d.ssim ?? 0)), [data])
-  const maxX = Math.max(1, data.length)
-  const minP = Math.min(...ps)
-  const maxP = Math.max(...ps)
-  const minS = Math.min(...ss)
-  const maxS = Math.max(...ss)
-  // Avoid flat-looking lines by normalizing to min-max range with small padding
-  const rangeP = Math.max(0.001, maxP - minP)
-  const rangeS = Math.max(0.001, maxS - minS)
-  const toX = (i: number) => padding + (i / (maxX - 1)) * (width - padding * 2)
-  const toYNorm = (v: number, min: number, range: number) => height - padding - ((v - min) / range) * (height - padding * 2)
-  const path = (vals: number[], min: number, range: number) => vals.map((v, i) => `${i === 0 ? 'M' : 'L'} ${toX(i)} ${toYNorm(v, min, range)}`).join(' ')
-  return (
-    <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-40">
-      <rect x={0} y={0} width={width} height={height} fill="none" />
-      <path d={path(ps, minP, rangeP)} stroke="#38bdf8" fill="none" strokeWidth={2} />
-      <path d={path(ss, minS, rangeS)} stroke="#34d399" fill="none" strokeWidth={2} />
-      <text x={padding} y={18} className="fill-cyan-300 text-[10px]">PSNR</text>
-      <text x={padding+44} y={18} className="fill-emerald-300 text-[10px]">SSIM</text>
-    </svg>
-  )
-}
-
-function ChartsGrid({ series }: { series: { frame: number; psnr?: number|null; ssim?: number|null; uiqm_enh?: number|null; uiqm_orig?: number|null }[] }) {
-  const commonTooltip = { background: "rgba(2,6,23,0.95)", border: "1px solid rgba(148,163,184,0.25)", color: "#e2e8f0" }
-  return (
-    <div className="grid grid-cols-1 gap-8">
-      <div>
-        <div className="text-slate-200 text-sm mb-2">PSNR (Peak Signal-to-Noise Ratio)</div>
-        <div className="h-56 w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={series} margin={{ top: 12, right: 16, left: 8, bottom: 12 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.25)" />
-              <XAxis dataKey="frame" stroke="#a3bffa" tickMargin={8} />
-              <YAxis stroke="#a3bffa" label={{ value: "PSNR (dB)", angle: -90, position: "insideLeft", fill: "#94a3b8" }} />
-              <Tooltip contentStyle={commonTooltip} />
-              <Line type="monotone" dataKey="psnr" name="PSNR (dB)" stroke="#38bdf8" dot={false} strokeWidth={2} />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-
-      <div>
-        <div className="text-slate-200 text-sm mb-2">SSIM (Structural Similarity Index)</div>
-        <div className="h-56 w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={series} margin={{ top: 12, right: 16, left: 8, bottom: 12 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.25)" />
-              <XAxis dataKey="frame" stroke="#a3bffa" tickMargin={8} />
-              <YAxis stroke="#a3bffa" label={{ value: "SSIM", angle: -90, position: "insideLeft", fill: "#94a3b8" }} />
-              <Tooltip contentStyle={commonTooltip} />
-              <Line type="monotone" dataKey="ssim" name="SSIM" stroke="#34d399" dot={false} strokeWidth={2} />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-
-      <div>
-        <div className="text-slate-200 text-sm mb-2">UIQM (Underwater Image Quality Measure)</div>
-        <div className="h-56 w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={series} margin={{ top: 24, right: 16, left: 8, bottom: 12 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.25)" />
-              <XAxis dataKey="frame" stroke="#a3bffa" tickMargin={8} />
-              <YAxis stroke="#a3bffa" label={{ value: "UIQM", angle: -90, position: "insideLeft", fill: "#94a3b8" }} />
-              <Tooltip contentStyle={commonTooltip} />
-              <Legend verticalAlign="top" height={20} wrapperStyle={{ color: "#cbd5e1" }} />
-              <Line type="monotone" dataKey="uiqm_orig" name="UIQM Original" stroke="#94a3b8" dot={false} strokeWidth={2} />
-              <Line type="monotone" dataKey="uiqm_enh" name="UIQM Enhanced" stroke="#a78bfa" dot={false} strokeWidth={2} />
-            </LineChart>
-          </ResponsiveContainer>
         </div>
       </div>
     </div>
   )
 }
-
-

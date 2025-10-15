@@ -1,118 +1,113 @@
-# Oceanova
+# MarEye - Marine Security AI Platform
 
-AI-powered marine conservation platform built with Next.js. It provides species identification, gene sequence analysis, threat assessment, conservation recommendations, and water quality analytics, backed by a Python ML model server and MongoDB.
+A modern Next.js frontend for marine security operations with AI-powered CNN image processing and object detection capabilities.
 
-## Features
-- Species identification with Gemini models
-- Gene sequence analysis via a local Python model server (Flask)
-- Threat assessment and conservation recommendations
-- Interactive water-quality maps (Leaflet)
-- Dashboard with charts and insights
+## 🚀 Quick Start
 
-## Tech Stack
-- Next.js 14 (App Router), React 18, TypeScript
-- UI: Radix UI, Tailwind CSS utilities, custom components
-- Data: MongoDB
-- AI: Google Gemini (`@google/generative-ai`)
-- Maps: Leaflet, React-Leaflet
-- Python ML service (Flask) for gene prediction
+### Prerequisites
+- Node.js 18+ 
+- npm or yarn
+- Python 3.8+ (for future ML model integration)
 
-## Prerequisites
-- Node.js 18+ and npm (or pnpm/yarn)
-- Python 3.8+ (for the ML model server)
-- MongoDB instance (local or cloud)
+### Installation
 
-## Quick Start
-1) Install dependencies
-```bash
-npm install
-# or: pnpm install
+1. **Clone/Download the project**
+   ```bash
+   # If you have the zip file, extract it first
+   ```
+
+2. **Install Node.js dependencies**
+   ```bash
+   npm install
+   # or
+   yarn install
+   ```
+
+3. **Set up environment variables**
+   ```bash
+   # Create .env.local file in the root directory
+   # Add your API keys here (optional for basic frontend)
+   GROK_API_KEY=your_grok_api_key_here
+   ```
+
+4. **Run the development server**
+   ```bash
+   npm run dev:direct
+   # or
+   yarn dev:direct
+   ```
+
+5. **Open your browser**
+   Navigate to [http://localhost:3000](http://localhost:3000)
+
+## 🛠️ Available Scripts
+
+- `npm run dev:direct` - Start development server
+- `npm run build` - Build for production
+- `npm run start` - Start production server
+- `npm run lint` - Run ESLint
+
+## 📁 Project Structure
+
+```
+├── app/                    # Next.js app directory
+│   ├── api/               # API routes
+│   ├── auth/              # Authentication pages
+│   ├── contact/           # Contact page
+│   ├── profile/           # User profile
+│   └── try/               # Landing page
+├── components/            # React components
+│   ├── ui/               # Reusable UI components
+│   └── ...               # Feature components
+├── lib/                  # Utility libraries
+├── public/               # Static assets
+└── hooks/                # Custom React hooks
 ```
 
-2) Configure environment variables (create `.env.local` in the repo root)
-```bash
-GEMINI_API_KEY=your_gemini_api_key
-MONGODB_URI=mongodb+srv://user:pass@host/dbname?retryWrites=true&w=majority
-```
+## 🎯 Features
 
-3) (Optional) Seed the database
-```bash
-node scripts/setup-database.js
-node scripts/seed-sample-data.js
-```
+- **Modern UI/UX** - Beautiful marine-themed interface
+- **Authentication** - User login/registration system
+- **AI Solutions** - CNN and Detection modules (ready for integration)
+- **Responsive Design** - Works on all devices
+- **Contact System** - Built-in contact form
+- **Profile Management** - User profile and settings
 
-4) Start the ML model server (separate terminal)
-- Windows (batch file):
-```bash
-scripts\start-model-server.bat
-```
-- Cross-platform (Python launcher):
-```bash
-python scripts/start-model-server.py
-```
-The server will run at `http://localhost:5000` if all model artifacts exist in `Model/`.
+## 🔧 For ML Model Integration
 
-5) Run the web app
-```bash
-npm run dev
-# open http://localhost:3000
-```
+When you're ready to add Python ML models:
 
-## Environment Variables
-- `GEMINI_API_KEY` (required): Used in `lib/gemini-client.ts` to initialize Gemini models.
-- `MONGODB_URI` (required): Used in `lib/mongodb.ts` to connect to the database.
+1. **Create Python virtual environment**
+   ```bash
+   python -m venv .venv
+   source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+   ```
 
-## Important Scripts
-- `npm run dev`: Start Next.js dev server
-- `npm run build`: Production build
-- `npm run start`: Start production server (after build)
-- `node scripts/setup-database.js`: Create indexes/config for MongoDB
-- `node scripts/seed-sample-data.js`: Insert sample data
-- `python scripts/start-model-server.py` or `scripts/start-model-server.bat`: Launch Python model server
+2. **Install Python dependencies**
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-## Project Structure (high-level)
-```
-app/                    Next.js App Router pages and API routes
-  api/                  Serverless API endpoints (AI, ML, water-quality, dashboard)
-components/             UI components and sections
-lib/                    Clients, DB, utilities, model integration helpers
-ml-models/              Python service code and requirements
-Model/                  Pretrained model artifacts (*.pkl, *.npy, etc.)
-scripts/                Setup, seed, and model server launch scripts
-```
+3. **Add your models** to the `lib/` directory
+4. **Update API routes** in `app/api/` to integrate with your models
 
-Key API routes (under `app/api/`):
-- `ai/species-identification/route.ts`
-- `ai/gene-sequence-analysis/route.ts`
-- `ai/threat-assessment/route.ts`
-- `ai/conservation-recommendations/route.ts`
-- `ai/water-quality-analysis/route.ts`
-- `ml/gene-prediction/route.ts`
-- `dashboard-data/route.ts`
-- `water-quality/route.ts`
+## 🌊 Marine Security Features
 
-## Python ML Model Server
-Artifacts required in `Model/`:
-- `stack_meta_clf.pkl`
-- `stack_label_encoder.pkl`
-- `lgb_models_list.pkl`
-- `xgb_models_list.pkl`
+- **CNN Image Processing** - Underwater image enhancement
+- **Object Detection** - YOLO-based detection system
+- **Real-time Analysis** - Live monitoring capabilities
+- **Multi-class Recognition** - Submarines, mines, divers detection
 
-Install Python dependencies once:
-```bash
-pip install -r ml-models/requirements.txt
-```
-Then run the server (see Quick Start). The launcher checks Python version, required files, installs deps, and starts Flask at `http://localhost:5000`.
+## 📧 Contact
 
-## Development Notes
-- Gemini client and models are created in `lib/gemini-client.ts`.
-- MongoDB client with connection reuse is in `lib/mongodb.ts`.
-- UI primitives live in `components/ui/`.
+For questions or collaboration:
+- Email: aochuba52@gmail.com
+- Phone: 8900007125
 
-## Troubleshooting
-- Missing `GEMINI_API_KEY` or `MONGODB_URI` will throw at startup.
-- If model server fails to start, verify artifacts exist in `Model/` and Python 3.8+ is used.
-- On Windows, prefer `scripts/start-model-server.bat` if Python launcher has path issues.
+## 📄 License
 
-## License
-Proprietary/Internal. Do not distribute without permission.
+This project is part of the MarEye Marine Security Platform.
+
+---
+
+**Note**: This is a frontend-only version. ML models and Python dependencies need to be added separately for full functionality.

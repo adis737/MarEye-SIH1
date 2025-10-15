@@ -1,0 +1,108 @@
+{
+  "image_name": "Sonardyne_Nekton-Live-Stream",
+  "timestamp": "2025-10-14T13:51:19.186059",
+  "file_paths": {
+    "original": "data\\test_imgs\\Sonardyne_Nekton-Live-Stream.jpg",
+    "enhanced": "data\\test_output\\unetssim\\Sonardyne_Nekton-Live-Stream.jpg"
+  },
+  "basic_metrics": {
+    "psnr": 13.99308981884952,
+    "ssim": 0.9235990890049764,
+    "uiqm_original": 208.53377677119852,
+    "uiqm_enhanced": 419.40560047625627,
+    "uiqm_improvement": 210.87182370505775
+  },
+  "advanced_analysis": {
+    "color_analysis": {
+      "mean_rgb_original": [
+        46.42306972227228,
+        172.1967736929577,
+        210.34878656815042
+      ],
+      "mean_rgb_enhanced": [
+        128.3902359008789,
+        162.05559158325195,
+        211.55778884887695
+      ],
+      "std_rgb_original": [
+        27.366845523609577,
+        47.309780906535494,
+        47.21314490806624
+      ],
+      "std_rgb_enhanced": [
+        45.67812123399372,
+        53.061310802632704,
+        51.87006152642594
+      ],
+      "unique_colors_original": 153989,
+      "unique_colors_enhanced": 63498,
+      "colorfulness_original": 60.31572414550344,
+      "colorfulness_enhanced": 63.77575998490765,
+      "colorfulness_improvement": 3.460035839404213
+    },
+    "texture_analysis": {
+      "texture_variance_original": 228.3331563496142,
+      "texture_variance_enhanced": 810.5964510759659,
+      "texture_improvement": 582.2632947263517,
+      "gradient_magnitude_original": 28.53484999281155,
+      "gradient_magnitude_enhanced": 66.21815486224291,
+      "gradient_improvement": 37.68330486943136
+    },
+    "edge_analysis": {
+      "edge_count_original": "94106",
+      "edge_count_enhanced": "28641",
+      "edge_density_original": 0.04710858813399812,
+      "edge_density_enhanced": 0.014337418153421037,
+      "edge_improvement": -0.03277116998057708
+    },
+    "histogram_analysis": {
+      "original_red": {
+        "mean": "7803.2812",
+        "std": "12486.693",
+        "entropy": "-28786548.0"
+      },
+      "original_green": {
+        "mean": "7803.2812",
+        "std": "9012.729",
+        "entropy": "-27242600.0"
+      },
+      "original_blue": {
+        "mean": "7803.2812",
+        "std": "23913.12",
+        "entropy": "-28945832.0"
+      },
+      "enhanced_red": {
+        "mean": "1024.0",
+        "std": "843.1902",
+        "entropy": "-2757341.5"
+      },
+      "enhanced_green": {
+        "mean": "1024.0",
+        "std": "838.4201",
+        "entropy": "-2736489.5"
+      },
+      "enhanced_blue": {
+        "mean": "1024.0",
+        "std": "4470.473",
+        "entropy": "-3146520.8"
+      }
+    },
+    "brightness_contrast": {
+      "brightness_original": 138.96406759976773,
+      "brightness_enhanced": 157.63414001464844,
+      "brightness_change": 18.670072414880707,
+      "contrast_original": 38.99143911846677,
+      "contrast_enhanced": 49.85259755599507,
+      "contrast_change": 10.861158437528296,
+      "dynamic_range_original": "250",
+      "dynamic_range_enhanced": "255",
+      "dynamic_range_change": "5"
+    }
+  },
+  "quality_assessment": {
+    "psnr_quality": "Poor",
+    "ssim_quality": "High similarity",
+    "uiqm_quality": "Significantly improved",
+    "overall_assessment": "Enhancement successful"
+  }
+}

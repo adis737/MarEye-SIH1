@@ -1,0 +1,77 @@
+================================================================================
+COMPREHENSIVE ENHANCEMENT ANALYSIS REPORT
+================================================================================
+Image Name: Sonardyne_Nekton-Live-Stream
+Analysis Date: 2025-10-14T13:51:19.186059
+Original File: data\test_imgs\Sonardyne_Nekton-Live-Stream.jpg
+Enhanced File: data\test_output\unetssim\Sonardyne_Nekton-Live-Stream.jpg
+================================================================================
+
+BASIC ENHANCEMENT METRICS
+----------------------------------------
+PSNR (Peak Signal-to-Noise Ratio): 13.9931 dB
+SSIM (Structural Similarity Index): 0.9236
+UIQM Original: 208.5338
+UIQM Enhanced: 419.4056
+UIQM Improvement: +210.8718
+
+QUALITY ASSESSMENT
+----------------------------------------
+PSNR Quality: Poor
+SSIM Quality: High similarity
+UIQM Quality: Significantly improved
+Overall Assessment: Enhancement successful
+
+ADVANCED ANALYSIS
+----------------------------------------
+Color Analysis:
+  RGB Mean Original: [46.42306972227228, 172.1967736929577, 210.34878656815042]
+  RGB Mean Enhanced: [128.3902359008789, 162.05559158325195, 211.55778884887695]
+  RGB Std Original: [27.366845523609577, 47.309780906535494, 47.21314490806624]
+  RGB Std Enhanced: [45.67812123399372, 53.061310802632704, 51.87006152642594]
+  Unique Colors Original: 153,989
+  Unique Colors Enhanced: 63,498
+  Colorfulness Original: 60.3157
+  Colorfulness Enhanced: 63.7758
+  Colorfulness Improvement: +3.4600
+
+Texture Analysis:
+  Texture Variance Original: 228.3332
+  Texture Variance Enhanced: 810.5965
+  Texture Improvement: +582.2633
+  Gradient Magnitude Original: 28.5348
+  Gradient Magnitude Enhanced: 66.2182
+  Gradient Improvement: +37.6833
+
+Edge Analysis:
+  Edge Count Original: 94,106
+  Edge Count Enhanced: 28,641
+  Edge Density Original: 0.047109
+  Edge Density Enhanced: 0.014337
+  Edge Improvement: -0.032771
+
+Brightness & Contrast Analysis:
+  Brightness Original: 138.9641
+  Brightness Enhanced: 157.6341
+  Brightness Change: +18.6701
+  Contrast Original: 38.9914
+  Contrast Enhanced: 49.8526
+  Contrast Change: +10.8612
+  Dynamic Range Original: 250.0000
+  Dynamic Range Enhanced: 255.0000
+  Dynamic Range Change: +5.0000
+
+Histogram Analysis:
+  RED Channel:
+    Original - Mean: 7803.2812, Std: 12486.6934, Entropy: -28786548.0000
+    Enhanced - Mean: 1024.0000, Std: 843.1902, Entropy: -2757341.5000
+  GREEN Channel:
+    Original - Mean: 7803.2812, Std: 9012.7285, Entropy: -27242600.0000
+    Enhanced - Mean: 1024.0000, Std: 838.4201, Entropy: -2736489.5000
+  BLUE Channel:
+    Original - Mean: 7803.2812, Std: 23913.1191, Entropy: -28945832.0000
+    Enhanced - Mean: 1024.0000, Std: 4470.4731, Entropy: -3146520.7500
+
+================================================================================
+END OF REPORT
+================================================================================

@@ -1,0 +1,8 @@
+Image Enhancement Evaluation Results
+Original: Sonardyne_Nekton-Live-Stream.jpg
+Enhanced: Sonardyne_Nekton-Live-Stream.jpg
+PSNR: 13.9931 dB
+SSIM: 0.9236
+UIQM Original: 208.5338
+UIQM Enhanced: 419.4056
+UIQM Improvement: +210.8718

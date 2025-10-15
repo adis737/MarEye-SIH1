@@ -1,0 +1,21 @@
+{
+  "image_name": "auv",
+  "timestamp": "2025-10-15T00:56:53.276529",
+  "file_paths": {
+    "original": "D:\\MAREYE-frontend(no modules, .next,venv)\\Oceanova---SIH\\temp\\input\\auv.jpg",
+    "enhanced": "D:\\MAREYE-frontend(no modules, .next,venv)\\Oceanova---SIH\\temp\\output\\enhanced_auv.jpg"
+  },
+  "basic_metrics": {
+    "psnr": 14.77057371974479,
+    "ssim": 0.26693447488946653,
+    "uiqm_original": 40.37178468906271,
+    "uiqm_enhanced": 188.3509263573061,
+    "uiqm_improvement": 147.9791416682434
+  },
+  "quality_assessment": {
+    "psnr_quality": "Poor",
+    "ssim_quality": "Low similarity",
+    "uiqm_quality": "Significantly improved",
+    "overall_assessment": "Enhancement successful"
+  }
+}

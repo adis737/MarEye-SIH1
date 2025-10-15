@@ -228,13 +228,6 @@ export function ContactSection() {
                   </a>
                 </Button>
 
-                <Button variant="outline" className="w-full justify-start bg-transparent" asChild>
-                  <a href="/api-docs" className="flex items-center gap-2">
-                    <ExternalLink className="h-4 w-4" />
-                    API Documentation
-                    <ExternalLink className="h-4 w-4 ml-auto" />
-                  </a>
-                </Button>
               </CardContent>
             </Card>
 

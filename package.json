@@ -64,7 +64,6 @@
     "crypto": "^1.0.1",
     "date-fns": "4.1.0",
     "embla-carousel-react": "latest",
-    "firebase-admin": "^13.5.0",
     "gcp-metadata": "^5.3.0",
     "geist": "latest",
     "google-auth-library": "^9.0.0",

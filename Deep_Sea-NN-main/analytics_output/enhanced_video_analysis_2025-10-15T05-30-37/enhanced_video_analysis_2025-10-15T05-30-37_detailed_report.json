@@ -1,0 +1,21 @@
+{
+  "image_name": "enhanced_video",
+  "timestamp": "2025-10-15T05:30:37.716Z",
+  "file_paths": {
+    "original": "D:\\MAREYE-frontend(no modules, .next,venv)\\Oceanova---SIH\\temp\\input\\enhanced_video.mp4",
+    "enhanced": "D:\\MAREYE-frontend(no modules, .next,venv)\\Oceanova---SIH\\temp\\output\\enhanced_enhanced_video.mp4"
+  },
+  "basic_metrics": {
+    "psnr": 30.799304928703016,
+    "ssim": 0.9769779271258344,
+    "uiqm_original": 2229.5914836443176,
+    "uiqm_enhanced": 3303.7419955908967,
+    "uiqm_improvement": 1074.1505119465792
+  },
+  "quality_assessment": {
+    "psnr_quality": "Good",
+    "ssim_quality": "High similarity",
+    "uiqm_quality": "Significantly improved",
+    "overall_assessment": "Enhancement successful"
+  }
+}

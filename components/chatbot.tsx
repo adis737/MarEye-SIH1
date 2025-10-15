@@ -18,7 +18,7 @@ export function Chatbot() {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "welcome",
-      content: "Hello! I'm your AI assistant for the Deep Sea Biodiversity Research Platform. How can I help you today?",
+      content: "Hello! I'm your AI assistant for the MarEye Marine Security Platform. How can I help you with marine security operations today?",
       sender: "bot",
       timestamp: new Date()
     }
@@ -92,7 +92,7 @@ export function Chatbot() {
         },
         body: JSON.stringify({
           message: inputMessage,
-          context: "Deep Sea Biodiversity Research Platform - AI-powered species identification, environmental monitoring, and predictive analytics for deep ocean ecosystems"
+          context: "MarEye Marine Security Platform - AI-powered submarine detection, mine identification, diver tracking, and threat assessment for underwater defense systems"
         })
       })
 
@@ -219,7 +219,7 @@ export function Chatbot() {
                     value={inputMessage}
                     onChange={(e) => setInputMessage(e.target.value)}
                     onKeyPress={handleKeyPress}
-                    placeholder="Ask me about the platform..."
+                    placeholder="Ask me about marine security..."
                     className="bg-slate-800 border-slate-600 text-white placeholder:text-slate-400 text-sm"
                     disabled={isLoading}
                   />

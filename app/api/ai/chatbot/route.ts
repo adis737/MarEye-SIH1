@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { GoogleGenerativeAI } from "@google/generative-ai"
-
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "")
+import { generateGrokResponse } from "@/lib/grok-client"
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,47 +12,26 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Chatbot is free to use - no token consumption required
+    // Check if Grok API key is available
+    if (!process.env.GROK_API_KEY) {
+      console.error("GROK_API_KEY not found in environment variables")
+      return NextResponse.json(
+        { error: "Grok API key not configured" },
+        { status: 500 }
+      )
+    }
 
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" })
+    console.log("GROK_API_KEY found, generating response...")
 
-    const systemPrompt = `You are an AI assistant for the Deep Sea Biodiversity Research Platform. This platform focuses on:
+    // Generate response using Grok API
+    const response = await generateGrokResponse(message, context || '')
 
-${context}
-
-Key features of the platform include:
-- AI-powered species identification using advanced machine learning
-- Environmental monitoring and water quality analysis
-- Predictive analytics for deep ocean ecosystems
-- Conservation insights and recommendations
-- Real-time data collection from various ocean sources
-- Gene sequence prediction for marine species
-- Population trend analysis
-- Interactive water quality mapping
-
-You should help users with:
-- Understanding how to use the platform features
-- Explaining marine biodiversity concepts
-- Providing information about ocean conservation
-- Guiding users through species identification processes
-- Answering questions about water quality monitoring
-- Explaining AI/ML techniques used in marine research
-
-IMPORTANT: When providing lists or multiple points, use proper bullet point formatting with "-" at the beginning of each line. This will ensure proper display in the chat interface.
-
-Keep responses helpful, informative, and focused on the platform's capabilities. Be concise but thorough.
-
-User message: ${message}`
-
-    const result = await model.generateContent(systemPrompt)
-    const response = await result.response
-    const text = response.text()
-
-    return NextResponse.json({ response: text })
+    return NextResponse.json({ response })
   } catch (error) {
     console.error("Chatbot API error:", error)
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
     return NextResponse.json(
-      { error: "Failed to generate response" },
+      { error: `Failed to generate response: ${errorMessage}` },
       { status: 500 }
     )
   }

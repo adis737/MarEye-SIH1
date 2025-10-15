@@ -1,0 +1,21 @@
+{
+  "image_name": "WhatsApp Image 2025-10-14 at 23.36.53_e10f093d",
+  "timestamp": "2025-10-14T20:17:21.881Z",
+  "file_paths": {
+    "original": "D:\\MAREYE-frontend(no modules, .next,venv)\\Oceanova---SIH\\temp\\input\\WhatsApp Image 2025-10-14 at 23.36.53_e10f093d.jpg",
+    "enhanced": "D:\\MAREYE-frontend(no modules, .next,venv)\\Oceanova---SIH\\temp\\output\\enhanced_WhatsApp Image 2025-10-14 at 23.36.53_e10f093d.jpg"
+  },
+  "basic_metrics": {
+    "psnr": 15.59636017909476,
+    "ssim": 0.7166828293881226,
+    "uiqm_original": 163.7572373676713,
+    "uiqm_enhanced": 463.6704712006976,
+    "uiqm_improvement": 299.9132338330263
+  },
+  "quality_assessment": {
+    "psnr_quality": "Moderate",
+    "ssim_quality": "Moderate similarity",
+    "uiqm_quality": "Significantly improved",
+    "overall_assessment": "Enhancement successful"
+  }
+}

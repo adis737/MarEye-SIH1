@@ -1,0 +1,21 @@
+{
+  "image_name": "WhatsApp Video 2025-10-04 at 12.13.38_f5e175de",
+  "timestamp": "2025-10-15T05:35:43.814Z",
+  "file_paths": {
+    "original": "D:\\MAREYE-frontend(no modules, .next,venv)\\Oceanova---SIH\\temp\\input\\WhatsApp Video 2025-10-04 at 12.13.38_f5e175de.mp4",
+    "enhanced": "D:\\MAREYE-frontend(no modules, .next,venv)\\Oceanova---SIH\\temp\\output\\enhanced_WhatsApp Video 2025-10-04 at 12.13.38_f5e175de.mp4"
+  },
+  "basic_metrics": {
+    "psnr": 28.03595778448221,
+    "ssim": 0.812528167963028,
+    "uiqm_original": 49.81302945416192,
+    "uiqm_enhanced": 51.582588708443936,
+    "uiqm_improvement": 1.769559254282015
+  },
+  "quality_assessment": {
+    "psnr_quality": "Good",
+    "ssim_quality": "High similarity",
+    "uiqm_quality": "Improved",
+    "overall_assessment": "Enhancement successful"
+  }
+}
