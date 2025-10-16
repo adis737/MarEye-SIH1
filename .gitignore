@@ -112,3 +112,6 @@ models/
 
 # Analytics output
 analytics_output/
+
+# HTML pages (standalone duplicates)
+html-pages/

@@ -7,17 +7,20 @@ services:
       # Set npm cache directory for persistence
       export NPM_CONFIG_CACHE=/opt/render/project/.npm
       
-      # Skip Python dependencies - this is a Node.js app
-      echo "Skipping Python dependencies..."
-      
-      # Use npm ci for faster, reliable builds
+      # Install dependencies
       echo "Installing Node.js dependencies..."
       npm ci --frozen-lockfile --prefer-offline
       
-      # Build the application
+      # Build the application with proper environment
       echo "Building Next.js application..."
-      npm run build:direct
-    startCommand: npm start
+      NODE_ENV=production npm run build:direct
+      
+      # Verify build output
+      echo "Build completed. Checking .next directory..."
+      ls -la .next/
+    startCommand: |
+      echo "Starting Next.js application..."
+      NODE_ENV=production npm start
     envVars:
       - key: NODE_ENV
         value: production

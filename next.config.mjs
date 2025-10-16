@@ -18,8 +18,12 @@ const nextConfig = {
     }
     return config;
   },
-  // Disable static optimization for API routes that use dynamic features
-  //output: 'standalone',
+  // Enable static optimization for better performance
+  output: 'standalone',
+  // Ensure proper asset prefix for production
+  assetPrefix: process.env.NODE_ENV === 'production' ? '' : '',
+  // Enable trailing slash for better routing
+  trailingSlash: false,
 }
 
 export default nextConfig
