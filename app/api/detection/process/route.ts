@@ -55,21 +55,21 @@ import os
 
 def run_yolo_detection(input_path, output_path):
     try:
-        print(f"Starting YOLO detection...")
-        print(f"Input path: {input_path}")
-        print(f"Output path: {output_path}")
+        print(f"Starting YOLO detection...", file=sys.stderr)
+        print(f"Input path: {input_path}", file=sys.stderr)
+        print(f"Output path: {output_path}", file=sys.stderr)
         
         # Check if input file exists
         if not os.path.exists(input_path):
-            print(f"Input file not found: {input_path}")
+            print(f"Input file not found: {input_path}", file=sys.stderr)
             return None
         
         # Try to load YOLO model
         model_path = '${join(projectRoot, "best.pt")}'
-        print(f"Looking for model at: {model_path}")
+        print(f"Looking for model at: {model_path}", file=sys.stderr)
         
         # For now, let's use the pre-trained model directly to ensure it works
-        print("Using pre-trained YOLOv8 model for reliable detection...")
+        print("Using pre-trained YOLOv8 model for reliable detection...", file=sys.stderr)
         model_path = None  # Skip custom model for now
         
         # Try to load the actual YOLO model using ultralytics
@@ -79,67 +79,67 @@ def run_yolo_detection(input_path, output_path):
         if model_path is None:
             # Use pre-trained model directly
             try:
-                print("Loading pre-trained YOLOv8 model...")
+                print("Loading pre-trained YOLOv8 model...", file=sys.stderr)
                 from ultralytics import YOLO
                 model = YOLO('yolov8n.pt')
                 model_type = 'pretrained_fallback'
-                print("Pre-trained YOLOv8 model loaded successfully")
+                print("Pre-trained YOLOv8 model loaded successfully", file=sys.stderr)
             except Exception as pretrained_error:
-                print(f"Failed to load pre-trained model: {str(pretrained_error)}")
+                print(f"Failed to load pre-trained model: {str(pretrained_error)}", file=sys.stderr)
                 return None
         else:
             try:
-                print("Loading YOLO model with ultralytics...")
+                print("Loading YOLO model with ultralytics...", file=sys.stderr)
                 from ultralytics import YOLO
                 model = YOLO(model_path)
                 model_type = 'ultralytics'
-                print("YOLO model loaded successfully with ultralytics")
+                print("YOLO model loaded successfully with ultralytics", file=sys.stderr)
             except Exception as model_error:
-                print(f"Failed to load YOLO model with ultralytics: {str(model_error)}")
-                print("Trying torch.hub as fallback...")
+                print(f"Failed to load YOLO model with ultralytics: {str(model_error)}", file=sys.stderr)
+                print("Trying torch.hub as fallback...", file=sys.stderr)
             
             try:
                 # Clear cache and try again
                 torch.hub.set_dir('/tmp/torch_hub')
                 model = torch.hub.load('ultralytics/yolov5', 'custom', path=model_path, force_reload=True, trust_repo=True)
                 model_type = 'torch_hub'
-                print("YOLO model loaded successfully with torch.hub")
+                print("YOLO model loaded successfully with torch.hub", file=sys.stderr)
             except Exception as hub_error:
-                print(f"Failed to load YOLO model with torch.hub: {str(hub_error)}")
-                print("Trying alternative approach...")
+                print(f"Failed to load YOLO model with torch.hub: {str(hub_error)}", file=sys.stderr)
+                print("Trying alternative approach...", file=sys.stderr)
                 
                 try:
                     # Try loading with different parameters
                     model = torch.hub.load('ultralytics/yolov5', 'custom', path=model_path, force_reload=True, trust_repo=True, _verbose=False)
                     model_type = 'torch_hub_alt'
-                    print("YOLO model loaded with alternative torch.hub approach")
+                    print("YOLO model loaded with alternative torch.hub approach", file=sys.stderr)
                 except Exception as alt_error:
-                    print(f"All YOLO loading methods failed: {str(alt_error)}")
-                    print("Falling back to pre-trained YOLOv8 model...")
+                    print(f"All YOLO loading methods failed: {str(alt_error)}", file=sys.stderr)
+                    print("Falling back to pre-trained YOLOv8 model...", file=sys.stderr)
                     
                     try:
                         # Use pre-trained YOLOv8 as fallback
                         model = YOLO('yolov8n.pt')
                         model_type = 'pretrained_fallback'
-                        print("Using pre-trained YOLOv8 model as fallback")
+                        print("Using pre-trained YOLOv8 model as fallback", file=sys.stderr)
                     except Exception as pretrained_error:
-                        print(f"Failed to load pre-trained model: {str(pretrained_error)}")
+                        print(f"Failed to load pre-trained model: {str(pretrained_error)}", file=sys.stderr)
                         return None
         
         if model is None:
-            print("Failed to load any YOLO model")
+            print("Failed to load any YOLO model", file=sys.stderr)
             return None
         
         # Load image
         img = cv2.imread(input_path)
         if img is None:
-            print(f"Could not load image: {input_path}")
+            print(f"Could not load image: {input_path}", file=sys.stderr)
             return None
             
-        print(f"Image loaded successfully: {img.shape}")
+        print(f"Image loaded successfully: {img.shape}", file=sys.stderr)
         
         # Run detection
-        print("Running YOLO detection...")
+        print("Running YOLO detection...", file=sys.stderr)
         
         # Run detection based on model type
         detections = []
@@ -154,7 +154,7 @@ def run_yolo_detection(input_path, output_path):
         
         if model_type == 'ultralytics' or model_type == 'pretrained_fallback':
             # Using ultralytics YOLO
-            print("Running detection with ultralytics YOLO...")
+            print("Running detection with ultralytics YOLO...", file=sys.stderr)
             
             # Use lower confidence for pre-trained model
             conf_threshold = 0.1 if model_type == 'pretrained_fallback' else 0.5
@@ -163,19 +163,19 @@ def run_yolo_detection(input_path, output_path):
             
             # If custom model finds no detections, try pre-trained model as fallback
             if (model_type == 'ultralytics' and (result.boxes is None or len(result.boxes) == 0)):
-                print("Custom model found no detections, trying pre-trained model...")
+                print("Custom model found no detections, trying pre-trained model...", file=sys.stderr)
                 try:
                     pretrained_model = YOLO('yolov8n.pt')
                     pretrained_results = pretrained_model.predict(img, conf=0.1, iou=0.45, verbose=False)
                     pretrained_result = pretrained_results[0]
                     
                     if pretrained_result.boxes is not None and len(pretrained_result.boxes) > 0:
-                        print("Pre-trained model found detections, using those...")
+                        print("Pre-trained model found detections, using those...", file=sys.stderr)
                         result = pretrained_result
                         model_type = 'pretrained_fallback'
                         class_names = pretrained_model.names
                 except Exception as pretrained_error:
-                    print(f"Failed to load pre-trained model: {str(pretrained_error)}")
+                    print(f"Failed to load pre-trained model: {str(pretrained_error)}", file=sys.stderr)
             
             if result.boxes is not None and len(result.boxes) > 0:
                 boxes = result.boxes.xyxy.cpu().numpy()  # Get bounding boxes
@@ -224,22 +224,22 @@ def run_yolo_detection(input_path, output_path):
                             'bbox': [float(x1), float(y1), float(x2-x1), float(y2-y1)]  # [x, y, width, height]
                         })
             
-            print(f"Found {len(detections)} detections with ultralytics")
+            print(f"Found {len(detections)} detections with ultralytics", file=sys.stderr)
             
             # Save annotated image
             try:
                 annotated_img = result.plot()  # ultralytics method
                 cv2.imwrite(output_path, annotated_img)
-                print(f"Annotated image saved to: {output_path}")
+                print(f"Annotated image saved to: {output_path}", file=sys.stderr)
             except Exception as save_error:
-                print(f"Failed to save annotated image: {str(save_error)}")
+                print(f"Failed to save annotated image: {str(save_error)}", file=sys.stderr)
                 # Fallback: save original image
                 cv2.imwrite(output_path, img)
-                print(f"Saved original image to: {output_path}")
+                print(f"Saved original image to: {output_path}", file=sys.stderr)
                 
         else:
             # Using torch.hub YOLO (old format)
-            print("Running detection with torch.hub YOLO...")
+            print("Running detection with torch.hub YOLO...", file=sys.stderr)
             
             # Set model parameters
             model.conf = 0.5
@@ -262,18 +262,18 @@ def run_yolo_detection(input_path, output_path):
                         'bbox': [float(x1), float(y1), float(x2-x1), float(y2-y1)]  # [x, y, width, height]
                     })
             
-            print(f"Found {len(detections)} detections with torch.hub")
+            print(f"Found {len(detections)} detections with torch.hub", file=sys.stderr)
             
             # Save annotated image
             try:
                 annotated_img = results.render()[0]
                 cv2.imwrite(output_path, annotated_img)
-                print(f"Annotated image saved to: {output_path}")
+                print(f"Annotated image saved to: {output_path}", file=sys.stderr)
             except Exception as save_error:
-                print(f"Failed to save annotated image: {str(save_error)}")
+                print(f"Failed to save annotated image: {str(save_error)}", file=sys.stderr)
                 # Fallback: save original image
                 cv2.imwrite(output_path, img)
-                print(f"Saved original image to: {output_path}")
+                print(f"Saved original image to: {output_path}", file=sys.stderr)
         
         return {
             'detections': detections,
@@ -281,22 +281,22 @@ def run_yolo_detection(input_path, output_path):
         }
         
     except Exception as e:
-        print(f"Error in YOLO detection: {str(e)}")
+        print(f"Error in YOLO detection: {str(e)}", file=sys.stderr)
         import traceback
-        traceback.print_exc()
+        traceback.print_exc(file=sys.stderr)
         return None
 
 if __name__ == "__main__":
     input_path = "${inputPath}"
     output_path = "${outputPath}"
     
-    print("=== YOLO Detection Script Started ===")
+    print("=== YOLO Detection Script Started ===", file=sys.stderr)
     result = run_yolo_detection(input_path, output_path)
     if result:
-        print("=== Detection Results ===")
+        print("=== Detection Results ===", file=sys.stderr)
         print(json.dumps(result))
     else:
-        print("=== Detection Failed ===")
+        print("=== Detection Failed ===", file=sys.stderr)
         print(json.dumps({
             'detections': [],
             'total_objects': 0
