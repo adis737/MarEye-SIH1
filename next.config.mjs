@@ -19,7 +19,7 @@ const nextConfig = {
     return config;
   },
   // Disable static optimization for API routes that use dynamic features
-  output: 'standalone',
+  //output: 'standalone',
 }
 
 export default nextConfig
